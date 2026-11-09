@@ -300,5 +300,13 @@ class PasswordManagementTest extends TestCase
 
         $log = \App\Models\DailyLog::where('patient_id', $patient->id)->first();
         $this->assertCount(6, $log->readings);
+
+        // Test create log view renders with 200
+        $createViewRes = $this->actingAs($user)->get("/patients/{$patient->id}/logs/create");
+        $createViewRes->assertStatus(200);
+
+        // Test edit log view renders with 200
+        $editViewRes = $this->actingAs($user)->get("/patients/{$patient->id}/logs/{$log->id}/edit");
+        $editViewRes->assertStatus(200);
     }
 }

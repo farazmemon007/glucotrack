@@ -336,7 +336,6 @@
                     </span>
                 </div>
             </x-card>
-            </x-card>
 
             <!-- Notes & Check Flag -->
             <x-card class="flex flex-col gap-3">
