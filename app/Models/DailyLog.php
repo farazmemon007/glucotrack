@@ -14,11 +14,17 @@ class DailyLog extends Model
         'patient_id',
         'log_date',
         'nashta_sugar',
+        'nashta_sugar_before',
+        'nashta_sugar_after',
         'nashta_timing',
         'insulin_morning',
         'lunch_sugar',
+        'lunch_sugar_before',
+        'lunch_sugar_after',
         'lunch_timing',
         'dinner_sugar',
+        'dinner_sugar_before',
+        'dinner_sugar_after',
         'dinner_timing',
         'insulin_night',
         'notes',
@@ -28,8 +34,14 @@ class DailyLog extends Model
     protected $casts = [
         'log_date' => 'date',
         'nashta_sugar' => 'integer',
+        'nashta_sugar_before' => 'integer',
+        'nashta_sugar_after' => 'integer',
         'lunch_sugar' => 'integer',
+        'lunch_sugar_before' => 'integer',
+        'lunch_sugar_after' => 'integer',
         'dinner_sugar' => 'integer',
+        'dinner_sugar_before' => 'integer',
+        'dinner_sugar_after' => 'integer',
         'insulin_morning' => 'float',
         'insulin_night' => 'float',
         'needs_check' => 'boolean',
@@ -58,10 +70,31 @@ class DailyLog extends Model
             return 'high';
         };
 
-        if ($this->nashta_sugar !== null) {
+        // Morning (Breakfast)
+        if ($this->nashta_sugar_before !== null) {
             $readings[] = [
                 'meal' => 'nashta',
-                'label' => 'Breakfast',
+                'label' => 'Breakfast (Before meal)',
+                'sugar' => $this->nashta_sugar_before,
+                'timing' => 'before',
+                'insulin' => $this->insulin_morning,
+                'status' => $checkStatus($this->nashta_sugar_before),
+            ];
+        }
+        if ($this->nashta_sugar_after !== null) {
+            $readings[] = [
+                'meal' => 'nashta',
+                'label' => 'Breakfast (After meal)',
+                'sugar' => $this->nashta_sugar_after,
+                'timing' => 'after',
+                'insulin' => $this->nashta_sugar_before === null ? $this->insulin_morning : null,
+                'status' => $checkStatus($this->nashta_sugar_after),
+            ];
+        }
+        if ($this->nashta_sugar_before === null && $this->nashta_sugar_after === null && $this->nashta_sugar !== null) {
+            $readings[] = [
+                'meal' => 'nashta',
+                'label' => 'Breakfast (' . ($this->nashta_timing === 'after' ? 'After meal' : 'Before meal') . ')',
                 'sugar' => $this->nashta_sugar,
                 'timing' => $this->nashta_timing ?? 'before',
                 'insulin' => $this->insulin_morning,
@@ -69,10 +102,31 @@ class DailyLog extends Model
             ];
         }
 
-        if ($this->lunch_sugar !== null) {
+        // Dopahar (Lunch)
+        if ($this->lunch_sugar_before !== null) {
             $readings[] = [
                 'meal' => 'lunch',
-                'label' => 'Lunch',
+                'label' => 'Lunch (Before meal)',
+                'sugar' => $this->lunch_sugar_before,
+                'timing' => 'before',
+                'insulin' => null,
+                'status' => $checkStatus($this->lunch_sugar_before),
+            ];
+        }
+        if ($this->lunch_sugar_after !== null) {
+            $readings[] = [
+                'meal' => 'lunch',
+                'label' => 'Lunch (After meal)',
+                'sugar' => $this->lunch_sugar_after,
+                'timing' => 'after',
+                'insulin' => null,
+                'status' => $checkStatus($this->lunch_sugar_after),
+            ];
+        }
+        if ($this->lunch_sugar_before === null && $this->lunch_sugar_after === null && $this->lunch_sugar !== null) {
+            $readings[] = [
+                'meal' => 'lunch',
+                'label' => 'Lunch (' . ($this->lunch_timing === 'after' ? 'After meal' : 'Before meal') . ')',
                 'sugar' => $this->lunch_sugar,
                 'timing' => $this->lunch_timing ?? 'before',
                 'insulin' => null,
@@ -80,10 +134,31 @@ class DailyLog extends Model
             ];
         }
 
-        if ($this->dinner_sugar !== null) {
+        // Raat (Dinner)
+        if ($this->dinner_sugar_before !== null) {
             $readings[] = [
                 'meal' => 'dinner',
-                'label' => 'Dinner',
+                'label' => 'Dinner (Before meal)',
+                'sugar' => $this->dinner_sugar_before,
+                'timing' => 'before',
+                'insulin' => $this->insulin_night,
+                'status' => $checkStatus($this->dinner_sugar_before),
+            ];
+        }
+        if ($this->dinner_sugar_after !== null) {
+            $readings[] = [
+                'meal' => 'dinner',
+                'label' => 'Dinner (After meal)',
+                'sugar' => $this->dinner_sugar_after,
+                'timing' => 'after',
+                'insulin' => $this->dinner_sugar_before === null ? $this->insulin_night : null,
+                'status' => $checkStatus($this->dinner_sugar_after),
+            ];
+        }
+        if ($this->dinner_sugar_before === null && $this->dinner_sugar_after === null && $this->dinner_sugar !== null) {
+            $readings[] = [
+                'meal' => 'dinner',
+                'label' => 'Dinner (' . ($this->dinner_timing === 'after' ? 'After meal' : 'Before meal') . ')',
                 'sugar' => $this->dinner_sugar,
                 'timing' => $this->dinner_timing ?? 'before',
                 'insulin' => $this->insulin_night,
@@ -108,9 +183,17 @@ class DailyLog extends Model
     public function getDailyAverageAttribute(): ?float
     {
         $readings = [];
-        if ($this->nashta_sugar !== null) $readings[] = $this->nashta_sugar;
-        if ($this->lunch_sugar !== null) $readings[] = $this->lunch_sugar;
-        if ($this->dinner_sugar !== null) $readings[] = $this->dinner_sugar;
+        if ($this->nashta_sugar_before !== null) $readings[] = $this->nashta_sugar_before;
+        if ($this->nashta_sugar_after !== null) $readings[] = $this->nashta_sugar_after;
+        if ($this->nashta_sugar_before === null && $this->nashta_sugar_after === null && $this->nashta_sugar !== null) $readings[] = $this->nashta_sugar;
+
+        if ($this->lunch_sugar_before !== null) $readings[] = $this->lunch_sugar_before;
+        if ($this->lunch_sugar_after !== null) $readings[] = $this->lunch_sugar_after;
+        if ($this->lunch_sugar_before === null && $this->lunch_sugar_after === null && $this->lunch_sugar !== null) $readings[] = $this->lunch_sugar;
+
+        if ($this->dinner_sugar_before !== null) $readings[] = $this->dinner_sugar_before;
+        if ($this->dinner_sugar_after !== null) $readings[] = $this->dinner_sugar_after;
+        if ($this->dinner_sugar_before === null && $this->dinner_sugar_after === null && $this->dinner_sugar !== null) $readings[] = $this->dinner_sugar;
 
         if (empty($readings)) {
             return null;

@@ -46,6 +46,11 @@ class DailyLogController extends Controller
         $validated['patient_id'] = $patient->id;
         $validated['needs_check'] = $request->boolean('needs_check');
 
+        // Sync legacy single fields for backwards compatibility
+        $validated['nashta_sugar'] = $validated['nashta_sugar_before'] ?? $validated['nashta_sugar_after'] ?? $validated['nashta_sugar'] ?? null;
+        $validated['lunch_sugar'] = $validated['lunch_sugar_before'] ?? $validated['lunch_sugar_after'] ?? $validated['lunch_sugar'] ?? null;
+        $validated['dinner_sugar'] = $validated['dinner_sugar_before'] ?? $validated['dinner_sugar_after'] ?? $validated['dinner_sugar'] ?? null;
+
         DailyLog::create($validated);
 
         return redirect()->route('dashboard', ['patient' => $patient->id])
@@ -82,6 +87,11 @@ class DailyLogController extends Controller
 
         $validated = $request->validated();
         $validated['needs_check'] = $request->boolean('needs_check');
+
+        // Sync legacy single fields for backwards compatibility
+        $validated['nashta_sugar'] = $validated['nashta_sugar_before'] ?? $validated['nashta_sugar_after'] ?? $validated['nashta_sugar'] ?? null;
+        $validated['lunch_sugar'] = $validated['lunch_sugar_before'] ?? $validated['lunch_sugar_after'] ?? $validated['lunch_sugar'] ?? null;
+        $validated['dinner_sugar'] = $validated['dinner_sugar_before'] ?? $validated['dinner_sugar_after'] ?? $validated['dinner_sugar'] ?? null;
 
         $log->update($validated);
 

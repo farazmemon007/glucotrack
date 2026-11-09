@@ -251,4 +251,54 @@ class PasswordManagementTest extends TestCase
         $dashResponse->assertStatus(200);
         $dashResponse->assertSee('Abdul Ghaffar');
     }
+
+    public function test_patient_can_log_before_and_after_sugar_for_meals(): void
+    {
+        $user = User::create([
+            'name' => 'Abdul Ghaffar',
+            'phone' => '03133080240',
+            'password' => Hash::make('secret123'),
+            'role' => 'patient',
+        ]);
+
+        $patient = Patient::create([
+            'caregiver_id' => $user->id,
+            'user_id' => $user->id,
+            'name' => 'Abdul Ghaffar',
+            'phone' => '03133080240',
+            'diabetes_type' => 'type2',
+            'target_low' => 80,
+            'target_high' => 180,
+        ]);
+
+        $logResponse = $this->actingAs($user)->post("/patients/{$patient->id}/logs", [
+            'log_date' => now()->toDateString(),
+            'nashta_sugar_before' => 105,
+            'nashta_sugar_after' => 155,
+            'nashta_timing' => 'before',
+            'lunch_sugar_before' => 115,
+            'lunch_sugar_after' => 165,
+            'lunch_timing' => 'after',
+            'dinner_sugar_before' => 125,
+            'dinner_sugar_after' => 175,
+            'dinner_timing' => 'before',
+            'insulin_morning' => 30,
+            'insulin_night' => 25,
+        ]);
+
+        $logResponse->assertRedirect(route('dashboard', ['patient' => $patient->id]));
+
+        $this->assertDatabaseHas('daily_logs', [
+            'patient_id' => $patient->id,
+            'nashta_sugar_before' => 105,
+            'nashta_sugar_after' => 155,
+            'lunch_sugar_before' => 115,
+            'lunch_sugar_after' => 165,
+            'dinner_sugar_before' => 125,
+            'dinner_sugar_after' => 175,
+        ]);
+
+        $log = \App\Models\DailyLog::where('patient_id', $patient->id)->first();
+        $this->assertCount(6, $log->readings);
+    }
 }

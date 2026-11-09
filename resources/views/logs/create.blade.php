@@ -50,7 +50,11 @@
             </x-card>
 
             <!-- Card Morning (Nashta) -->
-            <x-card class="flex flex-col gap-3.5">
+            <x-card class="flex flex-col gap-3.5" x-data="{ 
+                timing: '{{ old('nashta_timing', 'before') }}',
+                sugarBefore: '{{ old('nashta_sugar_before', '') }}',
+                sugarAfter: '{{ old('nashta_sugar_after', '') }}'
+            }">
                 <div class="flex items-center justify-between">
                     <h2 class="text-[15px] font-bold text-[#12201C]">
                         {{ __('app.morning') }}
@@ -58,32 +62,65 @@
                     <span class="text-[12px] text-[#4B5F59]">Breakfast</span>
                 </div>
 
+                <input type="hidden" name="nashta_timing" :value="timing">
+                <input type="hidden" name="nashta_sugar_before" :value="sugarBefore">
+                <input type="hidden" name="nashta_sugar_after" :value="sugarAfter">
+
                 <!-- Timing Toggle -->
-                <x-segmented 
-                    name="nashta_timing" 
-                    :value="old('nashta_timing', 'before')"
-                    :options="['before' => __('app.before_breakfast'), 'after' => __('app.after_breakfast')]" 
-                />
+                <div class="bg-[#E3EBE8] p-[4px] rounded-[22px] flex items-center w-full">
+                    <button 
+                        type="button" 
+                        @click="timing = 'before'"
+                        :class="timing === 'before' ? 'bg-[#0F766E] text-white shadow-xs font-bold' : 'bg-transparent text-[#12201C] hover:text-[#0F766E] font-medium'"
+                        class="flex-1 h-[40px] rounded-[18px] text-[13px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none"
+                    >
+                        <span>Before breakfast</span>
+                        <template x-if="sugarBefore">
+                            <span class="text-[11px] px-1.5 py-0.5 rounded-full font-bold bg-white/25" x-text="sugarBefore"></span>
+                        </template>
+                    </button>
+                    <button 
+                        type="button" 
+                        @click="timing = 'after'"
+                        :class="timing === 'after' ? 'bg-[#0F766E] text-white shadow-xs font-bold' : 'bg-transparent text-[#12201C] hover:text-[#0F766E] font-medium'"
+                        class="flex-1 h-[40px] rounded-[18px] text-[13px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none"
+                    >
+                        <span>After breakfast</span>
+                        <template x-if="sugarAfter">
+                            <span class="text-[11px] px-1.5 py-0.5 rounded-full font-bold bg-white/25" x-text="sugarAfter"></span>
+                        </template>
+                    </button>
+                </div>
 
                 <div class="grid grid-cols-2 gap-3 mt-1">
-                    <!-- Nashta Sugar -->
-                    <div>
-                        <label for="nashta_sugar" class="block text-[12px] text-[#4B5F59] font-normal mb-1">
-                            {{ __('app.nashta_sugar_label') }}
+                    <!-- Before Breakfast Sugar Input -->
+                    <div x-show="timing === 'before'">
+                        <label class="block text-[12px] text-[#0F766E] font-bold mb-1">
+                            Before breakfast sugar (mg/dL)
                         </label>
                         <input 
                             type="number" 
-                            id="nashta_sugar" 
-                            name="nashta_sugar" 
-                            value="{{ old('nashta_sugar') }}" 
+                            x-model="sugarBefore"
                             min="20" 
                             max="600" 
-                            placeholder="e.g. 180"
-                            class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                            placeholder="e.g. 110"
+                            class="w-full h-[48px] bg-white border-2 border-[#0F766E] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
                         >
-                        @error('nashta_sugar')
-                            <span class="text-[11px] text-[#9A3412] mt-0.5 block">{{ $message }}</span>
-                        @enderror
+                    </div>
+
+                    <!-- After Breakfast Sugar Input -->
+                    <div x-show="timing === 'after'">
+                        <label class="block text-[12px] text-[#0F766E] font-bold mb-1">
+                            After breakfast sugar (mg/dL)
+                        </label>
+                        <input 
+                            type="number" 
+                            x-model="sugarAfter"
+                            min="20" 
+                            max="600" 
+                            placeholder="e.g. 160"
+                            class="w-full h-[48px] bg-white border-2 border-[#0F766E] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                        >
                     </div>
 
                     <!-- Insulin Morning -->
@@ -102,15 +139,25 @@
                             placeholder="e.g. 30"
                             class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
                         >
-                        @error('insulin_morning')
-                            <span class="text-[11px] text-[#9A3412] mt-0.5 block">{{ $message }}</span>
-                        @enderror
                     </div>
+                </div>
+
+                <div class="text-[11px] text-[#4B5F59] min-h-[16px]">
+                    <span x-show="timing === 'before' && sugarAfter">
+                        Recorded after breakfast: <strong class="text-[#0F766E]" x-text="sugarAfter + ' mg/dL'"></strong> &bull; <button type="button" @click="timing = 'after'" class="text-[#0F766E] underline cursor-pointer">Edit after breakfast</button>
+                    </span>
+                    <span x-show="timing === 'after' && sugarBefore">
+                        Recorded before breakfast: <strong class="text-[#0F766E]" x-text="sugarBefore + ' mg/dL'"></strong> &bull; <button type="button" @click="timing = 'before'" class="text-[#0F766E] underline cursor-pointer">Edit before breakfast</button>
+                    </span>
                 </div>
             </x-card>
 
             <!-- Card Dopahar (Lunch) -->
-            <x-card class="flex flex-col gap-3.5">
+            <x-card class="flex flex-col gap-3.5" x-data="{ 
+                timing: '{{ old('lunch_timing', 'before') }}',
+                sugarBefore: '{{ old('lunch_sugar_before', '') }}',
+                sugarAfter: '{{ old('lunch_sugar_after', '') }}'
+            }">
                 <div class="flex items-center justify-between">
                     <h2 class="text-[15px] font-bold text-[#12201C]">
                         {{ __('app.dopahar') }}
@@ -118,35 +165,84 @@
                     <span class="text-[12px] text-[#4B5F59]">Optional</span>
                 </div>
 
+                <input type="hidden" name="lunch_timing" :value="timing">
+                <input type="hidden" name="lunch_sugar_before" :value="sugarBefore">
+                <input type="hidden" name="lunch_sugar_after" :value="sugarAfter">
+
                 <!-- Timing Toggle -->
-                <x-segmented 
-                    name="lunch_timing" 
-                    :value="old('lunch_timing', 'before')"
-                    :options="['before' => __('app.before_lunch'), 'after' => __('app.after_lunch')]" 
-                />
+                <div class="bg-[#E3EBE8] p-[4px] rounded-[22px] flex items-center w-full">
+                    <button 
+                        type="button" 
+                        @click="timing = 'before'"
+                        :class="timing === 'before' ? 'bg-[#0F766E] text-white shadow-xs font-bold' : 'bg-transparent text-[#12201C] hover:text-[#0F766E] font-medium'"
+                        class="flex-1 h-[40px] rounded-[18px] text-[13px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none"
+                    >
+                        <span>Before lunch</span>
+                        <template x-if="sugarBefore">
+                            <span class="text-[11px] px-1.5 py-0.5 rounded-full font-bold bg-white/25" x-text="sugarBefore"></span>
+                        </template>
+                    </button>
+                    <button 
+                        type="button" 
+                        @click="timing = 'after'"
+                        :class="timing === 'after' ? 'bg-[#0F766E] text-white shadow-xs font-bold' : 'bg-transparent text-[#12201C] hover:text-[#0F766E] font-medium'"
+                        class="flex-1 h-[40px] rounded-[18px] text-[13px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none"
+                    >
+                        <span>After lunch</span>
+                        <template x-if="sugarAfter">
+                            <span class="text-[11px] px-1.5 py-0.5 rounded-full font-bold bg-white/25" x-text="sugarAfter"></span>
+                        </template>
+                    </button>
+                </div>
 
                 <div>
-                    <label for="lunch_sugar" class="block text-[12px] text-[#4B5F59] font-normal mb-1">
-                        {{ __('app.lunch_sugar_label') }}
-                    </label>
-                    <input 
-                        type="number" 
-                        id="lunch_sugar" 
-                        name="lunch_sugar" 
-                        value="{{ old('lunch_sugar') }}" 
-                        min="20" 
-                        max="600" 
-                        placeholder="optional"
-                        class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-4 text-[16px] font-bold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
-                    >
-                    @error('lunch_sugar')
-                        <span class="text-[11px] text-[#9A3412] mt-0.5 block">{{ $message }}</span>
-                    @enderror
+                    <!-- Before Lunch Sugar Input -->
+                    <div x-show="timing === 'before'">
+                        <label class="block text-[12px] text-[#0F766E] font-bold mb-1">
+                            Before lunch sugar (mg/dL)
+                        </label>
+                        <input 
+                            type="number" 
+                            x-model="sugarBefore"
+                            min="20" 
+                            max="600" 
+                            placeholder="e.g. 120"
+                            class="w-full h-[48px] bg-white border-2 border-[#0F766E] rounded-[12px] px-4 text-[16px] font-bold text-[#12201C] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                        >
+                    </div>
+
+                    <!-- After Lunch Sugar Input -->
+                    <div x-show="timing === 'after'">
+                        <label class="block text-[12px] text-[#0F766E] font-bold mb-1">
+                            After lunch sugar (mg/dL)
+                        </label>
+                        <input 
+                            type="number" 
+                            x-model="sugarAfter"
+                            min="20" 
+                            max="600" 
+                            placeholder="e.g. 165"
+                            class="w-full h-[48px] bg-white border-2 border-[#0F766E] rounded-[12px] px-4 text-[16px] font-bold text-[#12201C] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                        >
+                    </div>
+                </div>
+
+                <div class="text-[11px] text-[#4B5F59] min-h-[16px]">
+                    <span x-show="timing === 'before' && sugarAfter">
+                        Recorded after lunch: <strong class="text-[#0F766E]" x-text="sugarAfter + ' mg/dL'"></strong> &bull; <button type="button" @click="timing = 'after'" class="text-[#0F766E] underline cursor-pointer">Edit after lunch</button>
+                    </span>
+                    <span x-show="timing === 'after' && sugarBefore">
+                        Recorded before lunch: <strong class="text-[#0F766E]" x-text="sugarBefore + ' mg/dL'"></strong> &bull; <button type="button" @click="timing = 'before'" class="text-[#0F766E] underline cursor-pointer">Edit before lunch</button>
+                    </span>
                 </div>
             </x-card>
 
             <!-- Card Raat (Dinner) -->
-            <x-card class="flex flex-col gap-3.5">
+            <x-card class="flex flex-col gap-3.5" x-data="{ 
+                timing: '{{ old('dinner_timing', 'before') }}',
+                sugarBefore: '{{ old('dinner_sugar_before', '') }}',
+                sugarAfter: '{{ old('dinner_sugar_after', '') }}'
+            }">
                 <div class="flex items-center justify-between">
                     <h2 class="text-[15px] font-bold text-[#12201C]">
                         {{ __('app.raat') }}
@@ -154,32 +250,65 @@
                     <span class="text-[12px] text-[#4B5F59]">Dinner</span>
                 </div>
 
+                <input type="hidden" name="dinner_timing" :value="timing">
+                <input type="hidden" name="dinner_sugar_before" :value="sugarBefore">
+                <input type="hidden" name="dinner_sugar_after" :value="sugarAfter">
+
                 <!-- Timing Toggle -->
-                <x-segmented 
-                    name="dinner_timing" 
-                    :value="old('dinner_timing', 'before')"
-                    :options="['before' => __('app.before_dinner'), 'after' => __('app.after_dinner')]" 
-                />
+                <div class="bg-[#E3EBE8] p-[4px] rounded-[22px] flex items-center w-full">
+                    <button 
+                        type="button" 
+                        @click="timing = 'before'"
+                        :class="timing === 'before' ? 'bg-[#0F766E] text-white shadow-xs font-bold' : 'bg-transparent text-[#12201C] hover:text-[#0F766E] font-medium'"
+                        class="flex-1 h-[40px] rounded-[18px] text-[13px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none"
+                    >
+                        <span>Before dinner</span>
+                        <template x-if="sugarBefore">
+                            <span class="text-[11px] px-1.5 py-0.5 rounded-full font-bold bg-white/25" x-text="sugarBefore"></span>
+                        </template>
+                    </button>
+                    <button 
+                        type="button" 
+                        @click="timing = 'after'"
+                        :class="timing === 'after' ? 'bg-[#0F766E] text-white shadow-xs font-bold' : 'bg-transparent text-[#12201C] hover:text-[#0F766E] font-medium'"
+                        class="flex-1 h-[40px] rounded-[18px] text-[13px] transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none"
+                    >
+                        <span>After dinner</span>
+                        <template x-if="sugarAfter">
+                            <span class="text-[11px] px-1.5 py-0.5 rounded-full font-bold bg-white/25" x-text="sugarAfter"></span>
+                        </template>
+                    </button>
+                </div>
 
                 <div class="grid grid-cols-2 gap-3 mt-1">
-                    <!-- Raat Sugar -->
-                    <div>
-                        <label for="dinner_sugar" class="block text-[12px] text-[#4B5F59] font-normal mb-1">
-                            {{ __('app.raat_sugar_label') }}
+                    <!-- Before Dinner Sugar Input -->
+                    <div x-show="timing === 'before'">
+                        <label class="block text-[12px] text-[#0F766E] font-bold mb-1">
+                            Before dinner sugar (mg/dL)
                         </label>
                         <input 
                             type="number" 
-                            id="dinner_sugar" 
-                            name="dinner_sugar" 
-                            value="{{ old('dinner_sugar') }}" 
+                            x-model="sugarBefore"
                             min="20" 
                             max="600" 
-                            placeholder="e.g. 165"
-                            class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                            placeholder="e.g. 130"
+                            class="w-full h-[48px] bg-white border-2 border-[#0F766E] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
                         >
-                        @error('dinner_sugar')
-                            <span class="text-[11px] text-[#9A3412] mt-0.5 block">{{ $message }}</span>
-                        @enderror
+                    </div>
+
+                    <!-- After Dinner Sugar Input -->
+                    <div x-show="timing === 'after'">
+                        <label class="block text-[12px] text-[#0F766E] font-bold mb-1">
+                            After dinner sugar (mg/dL)
+                        </label>
+                        <input 
+                            type="number" 
+                            x-model="sugarAfter"
+                            min="20" 
+                            max="600" 
+                            placeholder="e.g. 175"
+                            class="w-full h-[48px] bg-white border-2 border-[#0F766E] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                        >
                     </div>
 
                     <!-- Insulin Night -->
@@ -198,11 +327,18 @@
                             placeholder="e.g. 30"
                             class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
                         >
-                        @error('insulin_night')
-                            <span class="text-[11px] text-[#9A3412] mt-0.5 block">{{ $message }}</span>
-                        @enderror
                     </div>
                 </div>
+
+                <div class="text-[11px] text-[#4B5F59] min-h-[16px]">
+                    <span x-show="timing === 'before' && sugarAfter">
+                        Recorded after dinner: <strong class="text-[#0F766E]" x-text="sugarAfter + ' mg/dL'"></strong> &bull; <button type="button" @click="timing = 'after'" class="text-[#0F766E] underline cursor-pointer">Edit after dinner</button>
+                    </span>
+                    <span x-show="timing === 'after' && sugarBefore">
+                        Recorded before dinner: <strong class="text-[#0F766E]" x-text="sugarBefore + ' mg/dL'"></strong> &bull; <button type="button" @click="timing = 'before'" class="text-[#0F766E] underline cursor-pointer">Edit before dinner</button>
+                    </span>
+                </div>
+            </x-card>
             </x-card>
 
             <!-- Notes & Check Flag -->
