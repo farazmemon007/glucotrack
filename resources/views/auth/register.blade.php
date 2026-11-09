@@ -31,7 +31,7 @@
                         name="name" 
                         value="{{ old('name') }}" 
                         required 
-                        placeholder="Dr. Ahmed Khan"
+                        placeholder="Your full name"
                         class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-4 text-[15px] font-medium text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
                     >
                     @error('name')
@@ -49,7 +49,7 @@
                         id="email" 
                         name="email" 
                         value="{{ old('email') }}" 
-                        placeholder="doctor@example.com"
+                        placeholder="yourname@example.com"
                         class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-4 text-[15px] font-medium text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
                     >
                     @error('email')

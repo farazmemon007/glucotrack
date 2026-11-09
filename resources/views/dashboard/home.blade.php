@@ -31,6 +31,7 @@
 
             <div class="flex items-center gap-1.5">
                 <!-- Outline Pill Button: Switch -->
+                @if($patients->count() > 1)
                 <button 
                     type="button" 
                     @click="showSwitchModal = true"
@@ -41,6 +42,7 @@
                     </svg>
                     <span>{{ __('app.switch') }}</span>
                 </button>
+                @endif
 
                 <!-- Outline Pill Button: Logout -->
                 <form method="POST" action="{{ route('logout') }}">

@@ -9,7 +9,7 @@ class DailyLogRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->isCaregiver() ?? false;
+        return (bool) $this->user();
     }
 
     public function rules(): array

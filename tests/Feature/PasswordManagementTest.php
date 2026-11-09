@@ -223,4 +223,32 @@ class PasswordManagementTest extends TestCase
         ]);
         $loginRes->assertRedirect('/dashboard');
     }
+
+    public function test_patient_can_register_directly_and_gets_patient_dashboard(): void
+    {
+        $response = $this->post('/register', [
+            'name' => 'Abdul Ghaffar',
+            'phone' => '03133080240',
+            'email' => 'g@gmail.com',
+            'password' => 'secret123',
+            'password_confirmation' => 'secret123',
+        ]);
+
+        $response->assertRedirect('/dashboard');
+        $this->assertAuthenticated();
+
+        $user = User::where('phone', '03133080240')->first();
+        $this->assertNotNull($user);
+        $this->assertEquals('patient', $user->role);
+
+        // Check patient record was created
+        $patient = Patient::where('user_id', $user->id)->first();
+        $this->assertNotNull($patient);
+        $this->assertEquals('Abdul Ghaffar', $patient->name);
+
+        // Can access dashboard
+        $dashResponse = $this->get('/dashboard');
+        $dashResponse->assertStatus(200);
+        $dashResponse->assertSee('Abdul Ghaffar');
+    }
 }

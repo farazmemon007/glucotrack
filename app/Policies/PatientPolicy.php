@@ -28,7 +28,7 @@ class PatientPolicy
      */
     public function update(User $user, Patient $patient): bool
     {
-        return $user->isCaregiver() && $patient->caregiver_id === $user->id;
+        return $patient->caregiver_id === $user->id || $patient->user_id === $user->id;
     }
 
     /**
@@ -36,7 +36,7 @@ class PatientPolicy
      */
     public function delete(User $user, Patient $patient): bool
     {
-        return $user->isCaregiver() && $patient->caregiver_id === $user->id;
+        return $patient->caregiver_id === $user->id || $patient->user_id === $user->id;
     }
 
     /**
@@ -44,6 +44,6 @@ class PatientPolicy
      */
     public function createLog(User $user, Patient $patient): bool
     {
-        return $user->isCaregiver() && $patient->caregiver_id === $user->id;
+        return $patient->caregiver_id === $user->id || $patient->user_id === $user->id;
     }
 }

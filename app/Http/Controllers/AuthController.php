@@ -79,9 +79,23 @@ class AuthController extends Controller
             'email' => $validated['email'] ?? null,
             'phone' => $validated['phone'] ?? null,
             'password' => Hash::make($validated['password']),
-            'role' => 'caregiver',
+            'role' => 'patient',
         ]);
 
+        // Automatically create patient record for this user
+        $patient = \App\Models\Patient::create([
+            'caregiver_id' => $user->id,
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'phone' => $user->phone,
+            'diabetes_type' => 'type2',
+            'target_low' => 80,
+            'target_high' => 180,
+            'usual_morning_dose' => 30,
+            'usual_night_dose' => 30,
+        ]);
+
+        session(['active_patient_id' => $patient->id]);
         Auth::login($user);
 
         return redirect()->route('dashboard');

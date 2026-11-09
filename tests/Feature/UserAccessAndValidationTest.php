@@ -81,12 +81,16 @@ class UserAccessAndValidationTest extends TestCase
         $dashResponse->assertSee('Tariq Mahmood');
         $dashResponse->assertSee('Time in range');
 
-        // Patient CANNOT create or edit daily logs (authorization check)
-        $unauthPost = $this->actingAs($patientUser)->post("/patients/{$patient->id}/logs", [
+        // Patient CAN create daily logs for their own profile
+        $authPost = $this->actingAs($patientUser)->post("/patients/{$patient->id}/logs", [
             'log_date' => Carbon::yesterday()->toDateString(),
             'nashta_sugar' => 120,
         ]);
-        $unauthPost->assertStatus(403);
+        $authPost->assertRedirect(route('dashboard', ['patient' => $patient->id]));
+        $this->assertDatabaseHas('daily_logs', [
+            'patient_id' => $patient->id,
+            'nashta_sugar' => 120,
+        ]);
     }
 
     public function test_caregiver_cannot_access_another_caregivers_patient(): void

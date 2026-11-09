@@ -108,8 +108,14 @@ class DailyLogController extends Controller
     private function authorizeAccess(Patient $patient): void
     {
         $user = Auth::user();
-        if (!$user || !$user->isCaregiver() || $patient->caregiver_id !== $user->id) {
+        if (!$user) {
             abort(403, 'Unauthorized access.');
         }
+
+        if ($patient->caregiver_id === $user->id || $patient->user_id === $user->id) {
+            return;
+        }
+
+        abort(403, 'Unauthorized access.');
     }
 }

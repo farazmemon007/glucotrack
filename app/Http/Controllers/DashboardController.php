@@ -27,20 +27,46 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
+        $patient = null;
         if ($user->isPatient()) {
-            return redirect()->route('patient.dashboard');
+            $patient = Patient::where('user_id', $user->id)->first();
+            if (!$patient) {
+                $patient = Patient::create([
+                    'caregiver_id' => $user->id,
+                    'user_id' => $user->id,
+                    'name' => $user->name,
+                    'phone' => $user->phone,
+                    'diabetes_type' => 'type2',
+                    'target_low' => 80,
+                    'target_high' => 180,
+                    'usual_morning_dose' => 30,
+                    'usual_night_dose' => 30,
+                ]);
+            }
+            $patients = collect([$patient]);
+            $activePatient = $patient;
+        } else {
+            $patients = Patient::where('caregiver_id', $user->id)->orderBy('name')->get();
+            if ($patients->isEmpty()) {
+                $patient = Patient::create([
+                    'caregiver_id' => $user->id,
+                    'user_id' => $user->id,
+                    'name' => $user->name,
+                    'phone' => $user->phone,
+                    'diabetes_type' => 'type2',
+                    'target_low' => 80,
+                    'target_high' => 180,
+                    'usual_morning_dose' => 30,
+                    'usual_night_dose' => 30,
+                ]);
+                $patients = collect([$patient]);
+                $activePatient = $patient;
+            } else {
+                $activePatientId = $request->input('patient_id') ?? session('active_patient_id') ?? $patients->first()->id;
+                $activePatient = $patients->firstWhere('id', $activePatientId) ?? $patients->first();
+            }
         }
 
-        $patients = Patient::where('caregiver_id', $user->id)->orderBy('name')->get();
-
-        if ($patients->isEmpty()) {
-            return redirect()->route('patients.create')
-                ->with('info', 'Please add your first patient to begin.');
-        }
-
-        // Active patient resolution
-        $activePatientId = $request->input('patient_id') ?? session('active_patient_id') ?? $patients->first()->id;
-        $activePatient = $patients->firstWhere('id', $activePatientId) ?? $patients->first();
         session(['active_patient_id' => $activePatient->id]);
 
         // Get the latest log or today's log
