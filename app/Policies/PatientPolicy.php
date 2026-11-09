@@ -12,15 +12,7 @@ class PatientPolicy
      */
     public function view(User $user, Patient $patient): bool
     {
-        if ($user->isCaregiver()) {
-            return $patient->caregiver_id === $user->id;
-        }
-
-        if ($user->isPatient()) {
-            return $patient->user_id === $user->id;
-        }
-
-        return false;
+        return $patient->caregiver_id === $user->id || $patient->user_id === $user->id;
     }
 
     /**

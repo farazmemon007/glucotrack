@@ -46,7 +46,7 @@ class PasswordManagementTest extends TestCase
             'login' => '03133080240',
             'password' => 'mycustompass123',
         ]);
-        $loginResponse->assertRedirect('/patient/dashboard');
+        $loginResponse->assertRedirect('/dashboard');
         $this->assertAuthenticated();
     }
 
@@ -83,7 +83,7 @@ class PasswordManagementTest extends TestCase
             'login' => '03211234567',
             'password' => $creds['temp_password'],
         ]);
-        $loginResponse->assertRedirect('/patient/dashboard');
+        $loginResponse->assertRedirect('/dashboard');
     }
 
     public function test_caregiver_can_edit_patient_and_change_password(): void
@@ -137,7 +137,7 @@ class PasswordManagementTest extends TestCase
             'login' => '03133080240',
             'password' => 'brandnewpass786',
         ]);
-        $loginResponse->assertRedirect('/patient/dashboard');
+        $loginResponse->assertRedirect('/dashboard');
     }
 
     public function test_forgot_password_flow_with_phone_number(): void
@@ -189,7 +189,7 @@ class PasswordManagementTest extends TestCase
             'login' => '03133080240',
             'password' => 'mynewpassword',
         ]);
-        $loginRes->assertRedirect('/patient/dashboard');
+        $loginRes->assertRedirect('/dashboard');
         $this->assertAuthenticatedAs($user->fresh());
     }
 
@@ -308,5 +308,72 @@ class PasswordManagementTest extends TestCase
         // Test edit log view renders with 200
         $editViewRes = $this->actingAs($user)->get("/patients/{$patient->id}/logs/{$log->id}/edit");
         $editViewRes->assertStatus(200);
+    }
+
+    public function test_patient_can_edit_profile_and_navigate_without_403(): void
+    {
+        $user = User::create([
+            'name' => 'Self Patient',
+            'phone' => '03129998877',
+            'password' => Hash::make('mypassword123'),
+            'role' => 'patient',
+        ]);
+
+        $patient = Patient::create([
+            'caregiver_id' => $user->id,
+            'user_id' => $user->id,
+            'name' => 'Self Patient',
+            'phone' => '03129998877',
+            'diabetes_type' => 'type2',
+            'target_low' => 80,
+            'target_high' => 180,
+            'usual_morning_dose' => 30,
+            'usual_night_dose' => 30,
+        ]);
+
+        // 1. Patient visits directory / profile list -> 200 OK
+        $listRes = $this->actingAs($user)->get('/patients');
+        $listRes->assertStatus(200);
+        $listRes->assertSee('Self Patient');
+
+        // 2. Patient visits edit page -> 200 OK
+        $editRes = $this->actingAs($user)->get("/patients/{$patient->id}/edit");
+        $editRes->assertStatus(200);
+
+        // 3. Patient updates profile -> succeeds without 403
+        $updateRes = $this->actingAs($user)->put("/patients/{$patient->id}", [
+            'name' => 'Self Patient Updated',
+            'phone' => '03129998877',
+            'diabetes_type' => 'type1',
+            'target_low' => 85,
+            'target_high' => 170,
+            'usual_morning_dose' => 25,
+            'usual_night_dose' => 20,
+        ]);
+        $updateRes->assertRedirect('/patients');
+        $this->assertEquals('Self Patient Updated', $patient->fresh()->name);
+
+        // 4. Patient visits history and sheet -> 200 OK
+        $historyRes = $this->actingAs($user)->get("/patients/{$patient->id}/history");
+        $historyRes->assertStatus(200);
+
+        $sheetRes = $this->actingAs($user)->get("/patients/{$patient->id}/sheet");
+        $sheetRes->assertStatus(200);
+
+        // 5. Visiting another patient's log create URL redirects safely to own create log instead of 403
+        $otherCaregiver = User::create([
+            'name' => 'Other Caregiver',
+            'email' => 'other@caregiver.com',
+            'password' => Hash::make('password123'),
+            'role' => 'caregiver',
+        ]);
+        $otherPatient = Patient::create([
+            'caregiver_id' => $otherCaregiver->id,
+            'name' => 'Other Patient',
+            'diabetes_type' => 'type2',
+        ]);
+
+        $redirectRes = $this->actingAs($user)->get("/patients/{$otherPatient->id}/logs/create");
+        $redirectRes->assertRedirect(route('patients.logs.create', $patient));
     }
 }

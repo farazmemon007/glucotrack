@@ -72,10 +72,15 @@ class UserAccessAndValidationTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect('/patient/dashboard');
+        $response->assertRedirect(route('dashboard'));
         $this->assertAuthenticatedAs($patientUser);
 
-        // Patient dashboard view succeeds
+        // Main dashboard succeeds
+        $mainDash = $this->actingAs($patientUser)->get('/dashboard');
+        $mainDash->assertStatus(200);
+        $mainDash->assertSee('Tariq Mahmood');
+
+        // Patient summary dashboard view also succeeds
         $dashResponse = $this->actingAs($patientUser)->get('/patient/dashboard');
         $dashResponse->assertStatus(200);
         $dashResponse->assertSee('Tariq Mahmood');

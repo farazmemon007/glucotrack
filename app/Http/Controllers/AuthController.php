@@ -15,10 +15,6 @@ class AuthController extends Controller
     public function showLogin(): View|RedirectResponse
     {
         if (Auth::check()) {
-            $user = Auth::user();
-            if ($user->isPatient()) {
-                return redirect()->route('patient.dashboard');
-            }
             return redirect()->route('dashboard');
         }
 
@@ -38,11 +34,6 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->forget('manual_logout');
             $request->session()->regenerate();
-            $user = Auth::user();
-
-            if ($user->isPatient()) {
-                return redirect()->intended(route('patient.dashboard'));
-            }
 
             return redirect()->intended(route('dashboard'));
         }

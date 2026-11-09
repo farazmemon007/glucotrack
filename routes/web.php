@@ -9,15 +9,13 @@ use Illuminate\Support\Facades\Route;
 // Redirect root to dashboard or login
 Route::get('/', function () {
     if (auth()->check()) {
-        return auth()->user()->isPatient()
-            ? redirect()->route('patient.dashboard')
-            : redirect()->route('dashboard');
+        return redirect()->route('dashboard');
     }
 
-    // Auto-login default caregiver so dashboard opens directly on first visit
+    // Auto-login default user so dashboard opens directly on first visit
     if (!session('manual_logout')) {
         try {
-            $defaultUser = \App\Models\User::where('role', 'caregiver')->first() ?? \App\Models\User::first();
+            $defaultUser = \App\Models\User::first();
             if ($defaultUser) {
                 auth()->login($defaultUser, true);
                 return redirect()->route('dashboard');

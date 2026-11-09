@@ -4,6 +4,11 @@
 ])
 
 @php
+    if (!$patientId && auth()->check()) {
+        $user = auth()->user();
+        $p = \App\Models\Patient::where('user_id', $user->id)->orWhere('caregiver_id', $user->id)->first();
+        $patientId = $p?->id;
+    }
     $patientParam = $patientId ? ['patient' => $patientId] : [];
     $homeUrl = route('dashboard', $patientParam);
     $historyUrl = $patientId ? route('patients.history', $patientParam) : route('dashboard');

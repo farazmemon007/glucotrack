@@ -198,8 +198,11 @@
         </x-card>
 
         <!-- Footer Line: Usual Insulin Dose -->
-        <footer class="text-center py-4 text-[12px] text-[#4B5F59] border-t border-[#CBD8D4]/50">
+        <footer class="text-center py-4 text-[12px] text-[#4B5F59] border-t border-[#CBD8D4]/50 mb-16">
             Usual insulin dose: Morning <strong>{{ $patient->usual_morning_dose ? $patient->usual_morning_dose . ' u' : '--' }}</strong> &bull; Night <strong>{{ $patient->usual_night_dose ? $patient->usual_night_dose . ' u' : '--' }}</strong>
         </footer>
+
+        <!-- Bottom Navigation -->
+        <x-bottom-nav active="reports" :patientId="$patient->id" />
     </div>
 </x-app-layout>

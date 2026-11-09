@@ -20,11 +20,27 @@ class PatientController extends Controller
      */
     public function index(Request $request): View
     {
-        $caregiver = Auth::user();
-        $patients = Patient::where('caregiver_id', $caregiver->id)
+        $user = Auth::user();
+        $patients = Patient::where('caregiver_id', $user->id)
+            ->orWhere('user_id', $user->id)
             ->withCount('dailyLogs')
             ->orderBy('name')
             ->get();
+
+        if ($patients->isEmpty()) {
+            $patient = Patient::create([
+                'caregiver_id' => $user->id,
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'phone' => $user->phone,
+                'diabetes_type' => 'type2',
+                'target_low' => 80,
+                'target_high' => 180,
+                'usual_morning_dose' => 30,
+                'usual_night_dose' => 30,
+            ]);
+            $patients = collect([$patient]);
+        }
 
         $activePatientId = session('active_patient_id') ?? $patients->first()?->id;
 
@@ -111,7 +127,8 @@ class PatientController extends Controller
      */
     public function edit(Patient $patient): View
     {
-        if ($patient->caregiver_id !== Auth::id()) {
+        $user = Auth::user();
+        if ($patient->caregiver_id !== $user->id && $patient->user_id !== $user->id) {
             abort(403);
         }
 
@@ -123,7 +140,8 @@ class PatientController extends Controller
      */
     public function update(UpdatePatientRequest $request, Patient $patient): RedirectResponse
     {
-        if ($patient->caregiver_id !== Auth::id()) {
+        $user = Auth::user();
+        if ($patient->caregiver_id !== $user->id && $patient->user_id !== $user->id) {
             abort(403);
         }
 
@@ -195,8 +213,9 @@ class PatientController extends Controller
      */
     public function switchPatient(Request $request, Patient $patient): RedirectResponse
     {
-        if ($patient->caregiver_id !== Auth::id()) {
-            abort(403);
+        $user = Auth::user();
+        if ($patient->caregiver_id !== $user->id && $patient->user_id !== $user->id) {
+            return redirect()->route('dashboard');
         }
 
         session(['active_patient_id' => $patient->id]);
@@ -217,8 +236,9 @@ class PatientController extends Controller
      */
     public function show(Patient $patient): RedirectResponse
     {
-        if ($patient->caregiver_id !== Auth::id()) {
-            abort(403);
+        $user = Auth::user();
+        if ($patient->caregiver_id !== $user->id && $patient->user_id !== $user->id) {
+            return redirect()->route('dashboard');
         }
 
         session(['active_patient_id' => $patient->id]);

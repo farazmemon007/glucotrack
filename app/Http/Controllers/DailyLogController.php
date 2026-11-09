@@ -16,8 +16,16 @@ class DailyLogController extends Controller
     /**
      * Show the form for creating a new daily log.
      */
-    public function create(Request $request, Patient $patient): View
+    public function create(Request $request, Patient $patient): View|RedirectResponse
     {
+        $user = Auth::user();
+        if ($user && ($patient->caregiver_id !== $user->id && $patient->user_id !== $user->id)) {
+            $ownPatient = Patient::where('user_id', $user->id)->orWhere('caregiver_id', $user->id)->first();
+            if ($ownPatient) {
+                return redirect()->route('patients.logs.create', array_merge(['patient' => $ownPatient->id], $request->query()));
+            }
+        }
+
         $this->authorizeAccess($patient);
 
         $dateParam = $request->input('date');

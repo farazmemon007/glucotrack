@@ -27,44 +27,30 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        $patient = null;
-        if ($user->isPatient()) {
-            $patient = Patient::where('user_id', $user->id)->first();
-            if (!$patient) {
-                $patient = Patient::create([
-                    'caregiver_id' => $user->id,
-                    'user_id' => $user->id,
-                    'name' => $user->name,
-                    'phone' => $user->phone,
-                    'diabetes_type' => 'type2',
-                    'target_low' => 80,
-                    'target_high' => 180,
-                    'usual_morning_dose' => 30,
-                    'usual_night_dose' => 30,
-                ]);
-            }
+        // Get all patients associated with this user
+        $patients = Patient::where('user_id', $user->id)
+            ->orWhere('caregiver_id', $user->id)
+            ->orderBy('name')
+            ->get();
+
+        if ($patients->isEmpty()) {
+            $patient = Patient::create([
+                'caregiver_id' => $user->id,
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'phone' => $user->phone,
+                'diabetes_type' => 'type2',
+                'target_low' => 80,
+                'target_high' => 180,
+                'usual_morning_dose' => 30,
+                'usual_night_dose' => 30,
+            ]);
             $patients = collect([$patient]);
             $activePatient = $patient;
         } else {
-            $patients = Patient::where('caregiver_id', $user->id)->orderBy('name')->get();
-            if ($patients->isEmpty()) {
-                $patient = Patient::create([
-                    'caregiver_id' => $user->id,
-                    'user_id' => $user->id,
-                    'name' => $user->name,
-                    'phone' => $user->phone,
-                    'diabetes_type' => 'type2',
-                    'target_low' => 80,
-                    'target_high' => 180,
-                    'usual_morning_dose' => 30,
-                    'usual_night_dose' => 30,
-                ]);
-                $patients = collect([$patient]);
-                $activePatient = $patient;
-            } else {
-                $activePatientId = $request->input('patient_id') ?? session('active_patient_id') ?? $patients->first()->id;
-                $activePatient = $patients->firstWhere('id', $activePatientId) ?? $patients->first();
-            }
+            $requestedId = $request->input('patient_id') ?? $request->input('patient');
+            $activePatientId = $requestedId ?? session('active_patient_id') ?? $patients->first()->id;
+            $activePatient = $patients->firstWhere('id', $activePatientId) ?? $patients->first();
         }
 
         session(['active_patient_id' => $activePatient->id]);
@@ -313,17 +299,22 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->isCaregiver()) {
-            // If caregiver visits patient dashboard view, use active patient
-            $patient = Patient::where('caregiver_id', $user->id)
-                ->where('id', session('active_patient_id'))
-                ->first() ?? Patient::where('caregiver_id', $user->id)->first();
-        } else {
-            $patient = Patient::where('user_id', $user->id)->first();
-        }
+        $patient = Patient::where('user_id', $user->id)
+            ->orWhere('caregiver_id', $user->id)
+            ->first();
 
         if (!$patient) {
-            abort(404, 'Patient profile not found.');
+            $patient = Patient::create([
+                'caregiver_id' => $user->id,
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'phone' => $user->phone,
+                'diabetes_type' => 'type2',
+                'target_low' => 80,
+                'target_high' => 180,
+                'usual_morning_dose' => 30,
+                'usual_night_dose' => 30,
+            ]);
         }
 
         // Stats across all records or selected period (7 or 30 days)
@@ -350,31 +341,42 @@ class DashboardController extends Controller
 
     private function resolvePatient($user, ?Patient $patient = null): ?Patient
     {
-        if ($patient) {
-            $this->authorizePatientAccess($user, $patient);
-            return $patient;
-        }
-
-        if ($user->isPatient()) {
-            return Patient::where('user_id', $user->id)->first();
+        if ($patient && $patient->id) {
+            if ($patient->caregiver_id === $user->id || $patient->user_id === $user->id) {
+                return $patient;
+            }
         }
 
         $activeId = session('active_patient_id');
         if ($activeId) {
-            $p = Patient::where('caregiver_id', $user->id)->where('id', $activeId)->first();
+            $p = Patient::where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)->orWhere('caregiver_id', $user->id);
+            })->where('id', $activeId)->first();
             if ($p) return $p;
         }
 
-        return Patient::where('caregiver_id', $user->id)->first();
+        $own = Patient::where('user_id', $user->id)->orWhere('caregiver_id', $user->id)->first();
+        if ($own) {
+            session(['active_patient_id' => $own->id]);
+            return $own;
+        }
+
+        return Patient::create([
+            'caregiver_id' => $user->id,
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'phone' => $user->phone,
+            'diabetes_type' => 'type2',
+            'target_low' => 80,
+            'target_high' => 180,
+            'usual_morning_dose' => 30,
+            'usual_night_dose' => 30,
+        ]);
     }
 
     private function authorizePatientAccess($user, Patient $patient): void
     {
-        if ($user->isCaregiver() && $patient->caregiver_id === $user->id) {
-            return;
-        }
-
-        if ($user->isPatient() && $patient->user_id === $user->id) {
+        if ($patient->caregiver_id === $user->id || $patient->user_id === $user->id) {
             return;
         }
 

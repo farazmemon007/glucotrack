@@ -8,8 +8,17 @@ class UpdatePatientRequest extends FormRequest
 {
     public function authorize(): bool
     {
+        $user = $this->user();
+        if (!$user) {
+            return false;
+        }
+
         $patient = $this->route('patient');
-        return $this->user()?->isCaregiver() && $patient && $patient->caregiver_id === $this->user()->id;
+        if (!$patient) {
+            return false;
+        }
+
+        return $patient->caregiver_id === $user->id || $patient->user_id === $user->id;
     }
 
     public function rules(): array
