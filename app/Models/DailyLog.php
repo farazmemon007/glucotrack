@@ -13,6 +13,7 @@ class DailyLog extends Model
     protected $fillable = [
         'patient_id',
         'log_date',
+        'log_time',
         'nashta_sugar',
         'nashta_sugar_before',
         'nashta_sugar_after',

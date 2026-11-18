@@ -161,9 +161,16 @@
         <!-- Section: Today's entries -->
         <div class="flex flex-col gap-2.5 mt-1">
             <div class="flex items-center justify-between">
-                <h2 class="text-[15px] font-bold text-[#12201C]">
-                    {{ __('app.todays_entries') }}
-                </h2>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-[15px] font-bold text-[#12201C]">
+                        {{ __('app.todays_entries') }}
+                    </h2>
+                    @if($displayLog && $displayLog->log_time)
+                        <span class="text-[11px] font-semibold text-[#0F766E] bg-[#DDF0EC] px-2 py-0.5 rounded-full">
+                            {{ \Carbon\Carbon::parse($displayLog->log_time)->format('g:i A') }}
+                        </span>
+                    @endif
+                </div>
                 @if($displayLog)
                     <a href="{{ route('patients.logs.edit', [$patient, $displayLog]) }}" class="text-[12px] font-semibold text-[#0F766E] hover:underline">
                         Edit entry

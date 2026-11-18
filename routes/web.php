@@ -6,23 +6,10 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PatientController;
 use Illuminate\Support\Facades\Route;
 
-// Redirect root to dashboard or login
+// Redirect root to dashboard if logged in, otherwise directly to login
 Route::get('/', function () {
     if (auth()->check()) {
         return redirect()->route('dashboard');
-    }
-
-    // Auto-login default user so dashboard opens directly on first visit
-    if (!session('manual_logout')) {
-        try {
-            $defaultUser = \App\Models\User::first();
-            if ($defaultUser) {
-                auth()->login($defaultUser, true);
-                return redirect()->route('dashboard');
-            }
-        } catch (\Throwable $e) {
-            // Safe fallback if database tables are not yet migrated
-        }
     }
 
     return redirect()->route('login');

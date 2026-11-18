@@ -30,23 +30,50 @@
         <form method="POST" action="{{ route('patients.logs.store', $patient) }}" class="flex flex-col gap-[16px]">
             @csrf
 
-            <!-- Date Picker Field -->
-            <x-card class="flex flex-col gap-1.5">
-                <label for="log_date" class="text-[13px] text-[#4B5F59] font-normal">
-                    {{ __('app.date_label') }}
-                </label>
-                <input 
-                    type="date" 
-                    id="log_date" 
-                    name="log_date" 
-                    value="{{ old('log_date', $defaultDate) }}" 
-                    required 
-                    max="{{ date('Y-m-d') }}"
-                    class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-4 text-[15px] font-semibold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
-                >
-                @error('log_date')
-                    <span class="text-[12px] text-[#9A3412] mt-1">{{ $message }}</span>
-                @enderror
+            <!-- Date & Time Picker Field -->
+            <x-card class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="flex flex-col gap-1.5">
+                    <label for="log_date" class="text-[13px] text-[#4B5F59] font-normal">
+                        {{ __('app.date_label') }} <span class="text-[#9A3412]">*</span>
+                    </label>
+                    <input 
+                        type="date" 
+                        id="log_date" 
+                        name="log_date" 
+                        value="{{ old('log_date', $defaultDate) }}" 
+                        required 
+                        max="{{ date('Y-m-d') }}"
+                        class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-4 text-[15px] font-semibold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                    >
+                    @error('log_date')
+                        <span class="text-[12px] text-[#9A3412] mt-1">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex items-center justify-between">
+                        <label for="log_time" class="text-[13px] text-[#4B5F59] font-normal">
+                            Reading Time <span class="text-[11px] text-[#0F766E] font-medium">(Optional)</span>
+                        </label>
+                        <button 
+                            type="button" 
+                            onclick="const now = new Date(); document.getElementById('log_time').value = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');" 
+                            class="text-[11px] font-bold text-[#0F766E] hover:underline cursor-pointer"
+                        >
+                            Set current time
+                        </button>
+                    </div>
+                    <input 
+                        type="time" 
+                        id="log_time" 
+                        name="log_time" 
+                        value="{{ old('log_time', $existingLog?->log_time ? \Carbon\Carbon::parse($existingLog->log_time)->format('H:i') : '') }}" 
+                        class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-4 text-[15px] font-semibold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                    >
+                    @error('log_time')
+                        <span class="text-[12px] text-[#9A3412] mt-1">{{ $message }}</span>
+                    @enderror
+                </div>
             </x-card>
 
             <!-- Card Morning (Nashta) -->

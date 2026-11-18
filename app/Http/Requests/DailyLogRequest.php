@@ -37,6 +37,7 @@ class DailyLogRequest extends FormRequest
                     }
                 },
             ],
+            'log_time' => ['nullable', 'string', 'max:20'],
             'nashta_sugar' => ['nullable', 'integer', 'between:20,600'],
             'nashta_sugar_before' => ['nullable', 'integer', 'between:20,600'],
             'nashta_sugar_after' => ['nullable', 'integer', 'between:20,600'],

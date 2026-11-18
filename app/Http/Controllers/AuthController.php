@@ -32,7 +32,6 @@ class AuthController extends Controller
         $credentials = $isEmail ? ['email' => $login, 'password' => $password] : ['phone' => $login, 'password' => $password];
 
         if (Auth::attempt($credentials, $remember)) {
-            $request->session()->forget('manual_logout');
             $request->session()->regenerate();
 
             return redirect()->intended(route('dashboard'));
@@ -97,7 +96,6 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        $request->session()->put('manual_logout', true);
 
         return redirect()->route('login');
     }
