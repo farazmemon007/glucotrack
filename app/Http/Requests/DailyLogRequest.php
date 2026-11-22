@@ -42,6 +42,7 @@ class DailyLogRequest extends FormRequest
             'lunch_time' => ['nullable', 'string', 'max:20'],
             'lunch_time_before' => ['nullable', 'string', 'max:20'],
             'lunch_time_after' => ['nullable', 'string', 'max:20'],
+            'insulin_lunch' => ['nullable', 'numeric', 'between:0,200'],
             'dinner_sugar' => ['nullable', 'integer', 'between:20,600'],
             'dinner_sugar_before' => ['nullable', 'integer', 'between:20,600'],
             'dinner_sugar_after' => ['nullable', 'integer', 'between:20,600'],
@@ -64,6 +65,7 @@ class DailyLogRequest extends FormRequest
             'lunch_sugar.between' => 'Sugar reading must be between 20 and 600 mg/dL.',
             'dinner_sugar.between' => 'Sugar reading must be between 20 and 600 mg/dL.',
             'insulin_morning.between' => 'Insulin dose must be between 0 and 200 units.',
+            'insulin_lunch.between' => 'Insulin dose must be between 0 and 200 units.',
             'insulin_night.between' => 'Insulin dose must be between 0 and 200 units.',
         ];
     }

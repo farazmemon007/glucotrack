@@ -217,6 +217,9 @@
                                     @else
                                         <span class="text-[#4B5F59]">-</span>
                                     @endif
+                                    @if($log->insulin_lunch !== null)
+                                        <span class="text-[10px] text-[#0F766E] font-bold block leading-tight mt-0.5" title="Insulin lunch">{{ $log->insulin_lunch }} u</span>
+                                    @endif
                                 </td>
 
                                 <!-- Raat Sugar -->

@@ -47,6 +47,7 @@ return [
     'lunch_sugar_label' => 'دوپہر شوگر (mg/dL)',
     'raat_sugar_label' => 'رات کا کھانا شوگر (mg/dL)',
     'insulin_morning_label' => 'صبح کی انسولین (u)',
+    'insulin_lunch_label' => 'دوپہر کی انسولین (u)',
     'insulin_night_label' => 'رات کی انسولین (u)',
     'notes_label' => 'نوٹس / ریمارکس',
     'save_entry' => 'محفوظ کریں',

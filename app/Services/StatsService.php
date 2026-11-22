@@ -115,7 +115,7 @@ class StatsService
                     'full_date' => $fullDateStr,
                     'log_date' => $log->log_date,
                     'status' => $this->getStatus($log->lunch_sugar, $targetLow, $targetHigh),
-                    'dose' => null,
+                    'dose' => $log->insulin_lunch,
                     'log' => $log,
                 ];
                 $allReadings[] = $item;

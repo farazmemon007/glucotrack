@@ -29,6 +29,7 @@ class DailyLog extends Model
         'lunch_time',
         'lunch_time_before',
         'lunch_time_after',
+        'insulin_lunch',
         'dinner_sugar',
         'dinner_sugar_before',
         'dinner_sugar_after',
@@ -53,6 +54,7 @@ class DailyLog extends Model
         'dinner_sugar_before' => 'integer',
         'dinner_sugar_after' => 'integer',
         'insulin_morning' => 'float',
+        'insulin_lunch' => 'float',
         'insulin_night' => 'float',
         'needs_check' => 'boolean',
     ];
@@ -335,7 +337,7 @@ class DailyLog extends Model
                 'sugar' => $this->lunch_sugar_before,
                 'timing' => 'before',
                 'time' => $this->formatted_lunch_time_before ?? $this->formatted_lunch_time,
-                'insulin' => null,
+                'insulin' => $this->insulin_lunch,
                 'status' => $checkStatus($this->lunch_sugar_before),
             ];
         }
@@ -346,7 +348,7 @@ class DailyLog extends Model
                 'sugar' => $this->lunch_sugar_after,
                 'timing' => 'after',
                 'time' => $this->formatted_lunch_time_after ?? $this->formatted_lunch_time,
-                'insulin' => null,
+                'insulin' => $this->lunch_sugar_before === null ? $this->insulin_lunch : null,
                 'status' => $checkStatus($this->lunch_sugar_after),
             ];
         }
@@ -357,7 +359,7 @@ class DailyLog extends Model
                 'sugar' => $this->lunch_sugar,
                 'timing' => $this->lunch_timing ?? 'before',
                 'time' => $this->formatted_lunch_time,
-                'insulin' => null,
+                'insulin' => $this->insulin_lunch,
                 'status' => $checkStatus($this->lunch_sugar),
             ];
         }
@@ -405,7 +407,7 @@ class DailyLog extends Model
      */
     public function getTotalInsulinAttribute(): float
     {
-        return (float) ($this->insulin_morning ?? 0) + (float) ($this->insulin_night ?? 0);
+        return (float) ($this->insulin_morning ?? 0) + (float) ($this->insulin_lunch ?? 0) + (float) ($this->insulin_night ?? 0);
     }
 
     /**

@@ -326,6 +326,24 @@
                     </div>
                 </div>
 
+                <!-- Insulin Afternoon (Lunch) -->
+                <div>
+                    <label for="insulin_lunch" class="block text-[12px] text-[#4B5F59] font-normal mb-1">
+                        {{ __('app.insulin_lunch_label') }}
+                    </label>
+                    <input 
+                        type="number" 
+                        step="0.5" 
+                        id="insulin_lunch" 
+                        name="insulin_lunch" 
+                        value="{{ old('insulin_lunch', $log->insulin_lunch) }}" 
+                        min="0" 
+                        max="200" 
+                        placeholder="e.g. 10 (optional)"
+                        class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                    >
+                </div>
+
                 <div class="text-[11px] text-[#4B5F59] min-h-[16px]">
                     <span x-show="timing === 'before' && sugarAfter">
                         Recorded after lunch: <strong class="text-[#0F766E]" x-text="sugarAfter + ' mg/dL' + (timeAfter ? ' (' + timeAfter + ')' : '')"></strong> &bull; <button type="button" @click="timing = 'after'" class="text-[#0F766E] underline cursor-pointer">Edit after lunch</button>

@@ -47,6 +47,7 @@ return [
     'lunch_sugar_label' => 'Lunch sugar (mg/dL)',
     'raat_sugar_label' => 'Dinner sugar (mg/dL)',
     'insulin_morning_label' => 'Insulin morning (u)',
+    'insulin_lunch_label' => 'Insulin afternoon (u)',
     'insulin_night_label' => 'Insulin night (u)',
     'notes_label' => 'Notes / Remarks',
     'save_entry' => 'Save entry',

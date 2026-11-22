@@ -191,6 +191,9 @@
                         @else
                             -
                         @endif
+                        @if($log->insulin_lunch !== null)
+                            <br><span style="font-size: 7px; color: #0F766E; font-weight: bold;">{{ $log->insulin_lunch }}u</span>
+                        @endif
                     </td>
                     <td class="sugar-col">
                         @if($log->dinner_sugar !== null)

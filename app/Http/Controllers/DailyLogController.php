@@ -144,6 +144,9 @@ class DailyLogController extends Controller
             if (!empty($validated['lunch_time'])) {
                 $updateData['lunch_time'] = $validated['lunch_time'];
             }
+            if (isset($validated['insulin_lunch']) && $validated['insulin_lunch'] !== null && $validated['insulin_lunch'] !== '') {
+                $updateData['insulin_lunch'] = $validated['insulin_lunch'];
+            }
 
             // Dinner
             if (isset($validated['dinner_sugar_before']) && $validated['dinner_sugar_before'] !== null && $validated['dinner_sugar_before'] !== '') {
