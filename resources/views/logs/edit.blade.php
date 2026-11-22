@@ -27,6 +27,14 @@
             @csrf
             @method('PUT')
 
+            @if($errors->any())
+                <div class="p-3.5 rounded-[12px] bg-[#FDEBDD] border border-[#C2410C] text-[#9A3412] text-[13px] font-semibold flex flex-col gap-1">
+                    @foreach($errors->all() as $error)
+                        <div>&bull; {{ $error }}</div>
+                    @endforeach
+                </div>
+            @endif
+
             <!-- Date & Time Picker Field -->
             <x-card class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div class="flex flex-col gap-1.5">
@@ -64,7 +72,7 @@
                         type="time" 
                         id="log_time" 
                         name="log_time" 
-                        value="{{ old('log_time', $log->log_time ? \Carbon\Carbon::parse($log->log_time)->format('H:i') : '') }}" 
+                        value="{{ old('log_time', $log->log_time_input ?? '') }}" 
                         class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-4 text-[15px] font-semibold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
                     >
                     @error('log_time')

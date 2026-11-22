@@ -54,12 +54,47 @@ class DailyLogController extends Controller
         $validated['patient_id'] = $patient->id;
         $validated['needs_check'] = $request->boolean('needs_check');
 
+        // Normalize log_date to Y-m-d
+        if (!empty($validated['log_date'])) {
+            try {
+                $validated['log_date'] = Carbon::parse($validated['log_date'])->format('Y-m-d');
+            } catch (\Throwable) {
+                // Keep original value
+            }
+        }
+
+        // Normalize log_time to H:i:s for MySQL TIME column
+        if (!empty($validated['log_time'])) {
+            try {
+                $validated['log_time'] = Carbon::parse($validated['log_time'])->format('H:i:s');
+            } catch (\Throwable) {
+                $validated['log_time'] = null;
+            }
+        } else {
+            $validated['log_time'] = null;
+        }
+
         // Sync legacy single fields for backwards compatibility
         $validated['nashta_sugar'] = $validated['nashta_sugar_before'] ?? $validated['nashta_sugar_after'] ?? $validated['nashta_sugar'] ?? null;
         $validated['lunch_sugar'] = $validated['lunch_sugar_before'] ?? $validated['lunch_sugar_after'] ?? $validated['lunch_sugar'] ?? null;
         $validated['dinner_sugar'] = $validated['dinner_sugar_before'] ?? $validated['dinner_sugar_after'] ?? $validated['dinner_sugar'] ?? null;
 
-        DailyLog::create($validated);
+        try {
+            DailyLog::create($validated);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // If duplicate entry error (code 1062) occurs, update/merge existing record safely
+            if (isset($e->errorInfo[1]) && $e->errorInfo[1] === 1062) {
+                $existing = DailyLog::where('patient_id', $patient->id)
+                    ->whereDate('log_date', $validated['log_date'])
+                    ->first();
+                if ($existing) {
+                    $existing->update($validated);
+                    return redirect()->route('dashboard', ['patient' => $patient->id])
+                        ->with('success', 'Daily log saved successfully.');
+                }
+            }
+            throw $e;
+        }
 
         return redirect()->route('dashboard', ['patient' => $patient->id])
             ->with('success', 'Daily log saved successfully.');
@@ -96,6 +131,26 @@ class DailyLogController extends Controller
         $validated = $request->validated();
         $validated['needs_check'] = $request->boolean('needs_check');
 
+        // Normalize log_date to Y-m-d
+        if (!empty($validated['log_date'])) {
+            try {
+                $validated['log_date'] = Carbon::parse($validated['log_date'])->format('Y-m-d');
+            } catch (\Throwable) {
+                // Keep original value
+            }
+        }
+
+        // Normalize log_time to H:i:s for MySQL TIME column
+        if (!empty($validated['log_time'])) {
+            try {
+                $validated['log_time'] = Carbon::parse($validated['log_time'])->format('H:i:s');
+            } catch (\Throwable) {
+                $validated['log_time'] = null;
+            }
+        } else {
+            $validated['log_time'] = null;
+        }
+
         // Sync legacy single fields for backwards compatibility
         $validated['nashta_sugar'] = $validated['nashta_sugar_before'] ?? $validated['nashta_sugar_after'] ?? $validated['nashta_sugar'] ?? null;
         $validated['lunch_sugar'] = $validated['lunch_sugar_before'] ?? $validated['lunch_sugar_after'] ?? $validated['lunch_sugar'] ?? null;
@@ -103,7 +158,7 @@ class DailyLogController extends Controller
 
         $log->update($validated);
 
-        return redirect()->route('patients.history', $patient)
+        return redirect()->route('dashboard', ['patient' => $patient->id])
             ->with('success', 'Daily log updated successfully.');
     }
 

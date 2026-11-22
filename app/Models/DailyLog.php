@@ -54,6 +54,72 @@ class DailyLog extends Model
     }
 
     /**
+     * Safely format and normalize time for MySQL TIME column.
+     */
+    public function setLogTimeAttribute($value): void
+    {
+        if (empty($value)) {
+            $this->attributes['log_time'] = null;
+            return;
+        }
+
+        try {
+            $this->attributes['log_time'] = \Carbon\Carbon::parse($value)->format('H:i:s');
+        } catch (\Throwable) {
+            $this->attributes['log_time'] = null;
+        }
+    }
+
+    /**
+     * Safely format and normalize date for MySQL DATE column.
+     */
+    public function setLogDateAttribute($value): void
+    {
+        if (empty($value)) {
+            $this->attributes['log_date'] = null;
+            return;
+        }
+
+        try {
+            $this->attributes['log_date'] = \Carbon\Carbon::parse($value)->format('Y-m-d');
+        } catch (\Throwable) {
+            $this->attributes['log_date'] = $value;
+        }
+    }
+
+    /**
+     * Human-friendly 12-hour formatted time (e.g. 4:30 PM).
+     */
+    public function getFormattedTimeAttribute(): ?string
+    {
+        if (empty($this->log_time)) {
+            return null;
+        }
+
+        try {
+            return \Carbon\Carbon::parse($this->log_time)->format('g:i A');
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * 24-hour formatted time for HTML input[type=time] (e.g. 16:30).
+     */
+    public function getLogTimeInputAttribute(): ?string
+    {
+        if (empty($this->log_time)) {
+            return null;
+        }
+
+        try {
+            return \Carbon\Carbon::parse($this->log_time)->format('H:i');
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
      * Get all sugar readings for this day as a list of items.
      *
      * @return array<array{meal: string, label: string, sugar: int, timing: string|null, insulin: float|null, status: string}>

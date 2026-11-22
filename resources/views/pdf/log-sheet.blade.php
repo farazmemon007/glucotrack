@@ -154,8 +154,8 @@
                 <tr>
                     <td class="date-col">
                         {{ $log->log_date->format('j M') }}
-                        @if($log->log_time)
-                            <br><span style="font-size: 7px; color: #4B5F59;">{{ \Carbon\Carbon::parse($log->log_time)->format('g:i A') }}</span>
+                        @if($log->formatted_time)
+                            <br><span style="font-size: 7px; color: #4B5F59;">{{ $log->formatted_time }}</span>
                         @endif
                     </td>
                     <td class="sugar-col">

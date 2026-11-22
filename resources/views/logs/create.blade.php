@@ -27,8 +27,28 @@
         </p>
 
         <!-- Form -->
-        <form method="POST" action="{{ route('patients.logs.store', $patient) }}" class="flex flex-col gap-[16px]">
+        @php
+            $formAction = $existingLog ? route('patients.logs.update', [$patient, $existingLog]) : route('patients.logs.store', $patient);
+        @endphp
+        <form method="POST" action="{{ $formAction }}" class="flex flex-col gap-[16px]">
             @csrf
+            @if($existingLog)
+                @method('PUT')
+            @endif
+
+            @if($errors->any())
+                <div class="p-3.5 rounded-[12px] bg-[#FDEBDD] border border-[#C2410C] text-[#9A3412] text-[13px] font-semibold flex flex-col gap-1">
+                    @foreach($errors->all() as $error)
+                        <div>&bull; {{ $error }}</div>
+                    @endforeach
+                </div>
+            @endif
+
+            @if($existingLog)
+                <div class="p-3 bg-[#DDF0EC] border border-[#0F766E]/30 rounded-[14px] flex items-center justify-between text-[13px] text-[#0B5C55]">
+                    <span>An entry exists for {{ \Carbon\Carbon::parse($defaultDate)->format('j M Y') }}. Adding or modifying readings will update this day's log.</span>
+                </div>
+            @endif
 
             <!-- Date & Time Picker Field -->
             <x-card class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -67,7 +87,7 @@
                         type="time" 
                         id="log_time" 
                         name="log_time" 
-                        value="{{ old('log_time', $existingLog?->log_time ? \Carbon\Carbon::parse($existingLog->log_time)->format('H:i') : '') }}" 
+                        value="{{ old('log_time', $existingLog?->log_time_input ?? '') }}" 
                         class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-4 text-[15px] font-semibold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
                     >
                     @error('log_time')
@@ -78,9 +98,9 @@
 
             <!-- Card Morning (Nashta) -->
             <x-card class="flex flex-col gap-3.5" x-data="{ 
-                timing: '{{ old('nashta_timing', 'before') }}',
-                sugarBefore: '{{ old('nashta_sugar_before', '') }}',
-                sugarAfter: '{{ old('nashta_sugar_after', '') }}'
+                timing: '{{ old('nashta_timing', $existingLog->nashta_timing ?? 'before') }}',
+                sugarBefore: '{{ old('nashta_sugar_before', $existingLog->nashta_sugar_before ?? ($existingLog && $existingLog->nashta_timing === 'before' ? $existingLog->nashta_sugar : '')) }}',
+                sugarAfter: '{{ old('nashta_sugar_after', $existingLog->nashta_sugar_after ?? ($existingLog && $existingLog->nashta_timing === 'after' ? $existingLog->nashta_sugar : '')) }}'
             }">
                 <div class="flex items-center justify-between">
                     <h2 class="text-[15px] font-bold text-[#12201C]">
@@ -160,7 +180,7 @@
                             step="0.5" 
                             id="insulin_morning" 
                             name="insulin_morning" 
-                            value="{{ old('insulin_morning', $patient->usual_morning_dose) }}" 
+                            value="{{ old('insulin_morning', $existingLog->insulin_morning ?? $patient->usual_morning_dose) }}" 
                             min="0" 
                             max="200" 
                             placeholder="e.g. 30"
@@ -181,9 +201,9 @@
 
             <!-- Card Dopahar (Lunch) -->
             <x-card class="flex flex-col gap-3.5" x-data="{ 
-                timing: '{{ old('lunch_timing', 'before') }}',
-                sugarBefore: '{{ old('lunch_sugar_before', '') }}',
-                sugarAfter: '{{ old('lunch_sugar_after', '') }}'
+                timing: '{{ old('lunch_timing', $existingLog->lunch_timing ?? 'before') }}',
+                sugarBefore: '{{ old('lunch_sugar_before', $existingLog->lunch_sugar_before ?? ($existingLog && $existingLog->lunch_timing === 'before' ? $existingLog->lunch_sugar : '')) }}',
+                sugarAfter: '{{ old('lunch_sugar_after', $existingLog->lunch_sugar_after ?? ($existingLog && $existingLog->lunch_timing === 'after' ? $existingLog->lunch_sugar : '')) }}'
             }">
                 <div class="flex items-center justify-between">
                     <h2 class="text-[15px] font-bold text-[#12201C]">
@@ -266,9 +286,9 @@
 
             <!-- Card Raat (Dinner) -->
             <x-card class="flex flex-col gap-3.5" x-data="{ 
-                timing: '{{ old('dinner_timing', 'before') }}',
-                sugarBefore: '{{ old('dinner_sugar_before', '') }}',
-                sugarAfter: '{{ old('dinner_sugar_after', '') }}'
+                timing: '{{ old('dinner_timing', $existingLog->dinner_timing ?? 'before') }}',
+                sugarBefore: '{{ old('dinner_sugar_before', $existingLog->dinner_sugar_before ?? ($existingLog && $existingLog->dinner_timing === 'before' ? $existingLog->dinner_sugar : '')) }}',
+                sugarAfter: '{{ old('dinner_sugar_after', $existingLog->dinner_sugar_after ?? ($existingLog && $existingLog->dinner_timing === 'after' ? $existingLog->dinner_sugar : '')) }}'
             }">
                 <div class="flex items-center justify-between">
                     <h2 class="text-[15px] font-bold text-[#12201C]">
@@ -348,7 +368,7 @@
                             step="0.5" 
                             id="insulin_night" 
                             name="insulin_night" 
-                            value="{{ old('insulin_night', $patient->usual_night_dose) }}" 
+                            value="{{ old('insulin_night', $existingLog->insulin_night ?? $patient->usual_night_dose) }}" 
                             min="0" 
                             max="200" 
                             placeholder="e.g. 30"
@@ -379,7 +399,7 @@
                         rows="2" 
                         placeholder="optional notes or remarks..."
                         class="w-full bg-white border border-[#CBD8D4] rounded-[12px] p-3 text-[14px] text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
-                    >{{ old('notes') }}</textarea>
+                    >{{ old('notes', $existingLog->notes ?? '') }}</textarea>
                 </div>
 
                 <div class="flex items-center gap-2 pt-1 border-t border-[#E3EBE8]">
@@ -388,7 +408,7 @@
                         id="needs_check" 
                         name="needs_check" 
                         value="1" 
-                        {{ old('needs_check') ? 'checked' : '' }}
+                        {{ old('needs_check', $existingLog->needs_check ?? false) ? 'checked' : '' }}
                         class="w-4 h-4 rounded text-[#0F766E] focus:ring-[#0F766E] border-[#CBD8D4]"
                     >
                     <label for="needs_check" class="text-[12px] text-[#4B5F59] cursor-pointer">

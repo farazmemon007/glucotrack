@@ -163,8 +163,8 @@
                                 <td class="px-2 text-center text-[12px] font-semibold text-[#12201C] whitespace-nowrap">
                                     <a href="{{ route('dashboard', ['patient_id' => $patient->id, 'date' => $d->toDateString()]) }}" class="hover:text-[#0F766E] hover:underline" title="View details on Home screen">
                                         {{ $d->format('j M') }}
-                                        @if($log->log_time)
-                                            <span class="text-[10px] text-[#4B5F59] font-normal block">{{ \Carbon\Carbon::parse($log->log_time)->format('g:i A') }}</span>
+                                        @if($log->formatted_time)
+                                            <span class="text-[10px] text-[#4B5F59] font-normal block">{{ $log->formatted_time }}</span>
                                         @endif
                                     </a>
                                 </td>
