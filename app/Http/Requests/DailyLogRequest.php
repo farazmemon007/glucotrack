@@ -25,17 +25,6 @@ class DailyLogRequest extends FormRequest
                 'required',
                 'date',
                 'before_or_equal:today',
-                function ($attribute, $value, $fail) use ($patientId, $logId) {
-                    $dateStr = \Carbon\Carbon::parse($value)->format('Y-m-d');
-                    $exists = \App\Models\DailyLog::where('patient_id', $patientId)
-                        ->whereDate('log_date', $dateStr)
-                        ->when($logId, fn($q) => $q->where('id', '!=', $logId))
-                        ->exists();
-
-                    if ($exists) {
-                        $fail('A log entry already exists for this patient on the selected date.');
-                    }
-                },
             ],
             'log_time' => ['nullable', 'string', 'max:20'],
             'nashta_sugar' => ['nullable', 'integer', 'between:20,600'],

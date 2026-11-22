@@ -175,12 +175,18 @@ class UserAccessAndValidationTest extends TestCase
             'insulin_morning' => 30.5,
         ]);
 
-        // Unique per date: duplicate date for same patient fails
+        // Subsequent entry for same date merges/updates successfully
         $response = $this->actingAs($caregiver)->post("/patients/{$patient->id}/logs", [
             'log_date' => $validDate,
-            'nashta_sugar' => 150,
+            'lunch_sugar' => 150,
         ]);
-        $response->assertSessionHasErrors('log_date');
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('daily_logs', [
+            'patient_id' => $patient->id,
+            'nashta_sugar' => 140,
+            'lunch_sugar' => 150,
+            'insulin_morning' => 30.5,
+        ]);
     }
 
     public function test_pdf_export_route_downloads_pdf(): void
@@ -210,5 +216,68 @@ class UserAccessAndValidationTest extends TestCase
         $response = $this->actingAs($caregiver)->get("/patients/{$patient->id}/export.pdf?month=7&year=2026");
         $response->assertStatus(200);
         $response->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_add_reading_always_opens_fresh_form_and_supports_back_dates(): void
+    {
+        $caregiver = User::create([
+            'name' => 'Dr. Sara',
+            'email' => 'sara@test.com',
+            'password' => Hash::make('pass'),
+            'role' => 'caregiver',
+        ]);
+
+        $patient = Patient::create([
+            'caregiver_id' => $caregiver->id,
+            'name' => 'Abdul Ghaffar',
+            'diabetes_type' => 'type2',
+        ]);
+
+        // Pre-existing log for today
+        $today = Carbon::today()->toDateString();
+        DailyLog::create([
+            'patient_id' => $patient->id,
+            'log_date' => $today,
+            'nashta_sugar_before' => 153,
+            'nashta_sugar' => 153,
+            'insulin_morning' => 30,
+        ]);
+
+        // 1. GET /patients/{id}/logs/create should NOT prefill existing values or show update banner
+        $response = $this->actingAs($caregiver)->get("/patients/{$patient->id}/logs/create");
+        $response->assertStatus(200);
+        $response->assertDontSee("An entry exists for");
+        $response->assertSee('value="' . $today . '"', false);
+
+        // 2. Can log reading for a back date
+        $backDate = Carbon::today()->subDays(3)->toDateString();
+        $response = $this->actingAs($caregiver)->post("/patients/{$patient->id}/logs", [
+            'log_date' => $backDate,
+            'nashta_sugar_before' => 125,
+            'log_time' => '07:45 AM',
+        ]);
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('daily_logs', [
+            'patient_id' => $patient->id,
+            'log_date' => $backDate,
+            'nashta_sugar_before' => 125,
+            'log_time' => '07:45:00',
+        ]);
+
+        // 3. Adding lunch reading on today merges with breakfast reading without erasing it
+        $response = $this->actingAs($caregiver)->post("/patients/{$patient->id}/logs", [
+            'log_date' => $today,
+            'lunch_sugar_before' => 140,
+            'log_time' => '01:30 PM',
+        ]);
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('daily_logs', [
+            'patient_id' => $patient->id,
+            'log_date' => $today,
+            'nashta_sugar_before' => 153,
+            'lunch_sugar_before' => 140,
+            'insulin_morning' => 30,
+            'log_time' => '13:30:00',
+        ]);
     }
 }

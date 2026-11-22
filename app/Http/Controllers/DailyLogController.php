@@ -31,15 +31,9 @@ class DailyLogController extends Controller
         $dateParam = $request->input('date');
         $defaultDate = $dateParam ? Carbon::parse($dateParam)->format('Y-m-d') : Carbon::today()->format('Y-m-d');
 
-        // Check if a log already exists for this date, so user can edit or fill it
-        $existingLog = DailyLog::where('patient_id', $patient->id)
-            ->whereDate('log_date', $defaultDate)
-            ->first();
-
         return view('logs.create', [
             'patient' => $patient,
             'defaultDate' => $defaultDate,
-            'existingLog' => $existingLog,
         ]);
     }
 
@@ -78,6 +72,95 @@ class DailyLogController extends Controller
         $validated['nashta_sugar'] = $validated['nashta_sugar_before'] ?? $validated['nashta_sugar_after'] ?? $validated['nashta_sugar'] ?? null;
         $validated['lunch_sugar'] = $validated['lunch_sugar_before'] ?? $validated['lunch_sugar_after'] ?? $validated['lunch_sugar'] ?? null;
         $validated['dinner_sugar'] = $validated['dinner_sugar_before'] ?? $validated['dinner_sugar_after'] ?? $validated['dinner_sugar'] ?? null;
+
+        $logDate = $validated['log_date'];
+
+        // If an entry already exists for this patient on this date, merge newly entered fields
+        $existing = DailyLog::where('patient_id', $patient->id)
+            ->whereDate('log_date', $logDate)
+            ->first();
+
+        if ($existing) {
+            $updateData = [];
+
+            if (!empty($validated['log_time'])) {
+                $updateData['log_time'] = $validated['log_time'];
+            }
+
+            // Morning
+            if (isset($validated['nashta_sugar_before']) && $validated['nashta_sugar_before'] !== null && $validated['nashta_sugar_before'] !== '') {
+                $updateData['nashta_sugar_before'] = $validated['nashta_sugar_before'];
+            }
+            if (isset($validated['nashta_sugar_after']) && $validated['nashta_sugar_after'] !== null && $validated['nashta_sugar_after'] !== '') {
+                $updateData['nashta_sugar_after'] = $validated['nashta_sugar_after'];
+            }
+            if (isset($validated['nashta_sugar']) && $validated['nashta_sugar'] !== null && $validated['nashta_sugar'] !== '') {
+                $updateData['nashta_sugar'] = $validated['nashta_sugar'];
+            }
+            if (!empty($validated['nashta_timing'])) {
+                $updateData['nashta_timing'] = $validated['nashta_timing'];
+            }
+            if (isset($validated['insulin_morning']) && $validated['insulin_morning'] !== null && $validated['insulin_morning'] !== '') {
+                $updateData['insulin_morning'] = $validated['insulin_morning'];
+            }
+
+            // Lunch
+            if (isset($validated['lunch_sugar_before']) && $validated['lunch_sugar_before'] !== null && $validated['lunch_sugar_before'] !== '') {
+                $updateData['lunch_sugar_before'] = $validated['lunch_sugar_before'];
+            }
+            if (isset($validated['lunch_sugar_after']) && $validated['lunch_sugar_after'] !== null && $validated['lunch_sugar_after'] !== '') {
+                $updateData['lunch_sugar_after'] = $validated['lunch_sugar_after'];
+            }
+            if (isset($validated['lunch_sugar']) && $validated['lunch_sugar'] !== null && $validated['lunch_sugar'] !== '') {
+                $updateData['lunch_sugar'] = $validated['lunch_sugar'];
+            }
+            if (!empty($validated['lunch_timing'])) {
+                $updateData['lunch_timing'] = $validated['lunch_timing'];
+            }
+
+            // Dinner
+            if (isset($validated['dinner_sugar_before']) && $validated['dinner_sugar_before'] !== null && $validated['dinner_sugar_before'] !== '') {
+                $updateData['dinner_sugar_before'] = $validated['dinner_sugar_before'];
+            }
+            if (isset($validated['dinner_sugar_after']) && $validated['dinner_sugar_after'] !== null && $validated['dinner_sugar_after'] !== '') {
+                $updateData['dinner_sugar_after'] = $validated['dinner_sugar_after'];
+            }
+            if (isset($validated['dinner_sugar']) && $validated['dinner_sugar'] !== null && $validated['dinner_sugar'] !== '') {
+                $updateData['dinner_sugar'] = $validated['dinner_sugar'];
+            }
+            if (!empty($validated['dinner_timing'])) {
+                $updateData['dinner_timing'] = $validated['dinner_timing'];
+            }
+            if (isset($validated['insulin_night']) && $validated['insulin_night'] !== null && $validated['insulin_night'] !== '') {
+                $updateData['insulin_night'] = $validated['insulin_night'];
+            }
+
+            // Notes: append if existing has notes and newly submitted is not empty
+            if (isset($validated['notes']) && trim($validated['notes']) !== '') {
+                $newNote = trim($validated['notes']);
+                $updateData['notes'] = !empty($existing->notes) && !str_contains($existing->notes, $newNote)
+                    ? ($existing->notes . " | " . $newNote)
+                    : $newNote;
+            }
+
+            if ($request->has('needs_check')) {
+                $updateData['needs_check'] = $request->boolean('needs_check');
+            }
+
+            try {
+                $existing->update($updateData);
+            } catch (\Illuminate\Database\QueryException $e) {
+                if (isset($e->errorInfo[1]) && $e->errorInfo[1] === 1054 && isset($updateData['log_time'])) {
+                    unset($updateData['log_time']);
+                    $existing->update($updateData);
+                } else {
+                    throw $e;
+                }
+            }
+
+            return redirect()->route('dashboard', ['patient' => $patient->id])
+                ->with('success', 'Daily log saved successfully.');
+        }
 
         try {
             DailyLog::create($validated);
