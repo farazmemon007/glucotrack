@@ -163,9 +163,6 @@
                                 <td class="px-2 text-center text-[12px] font-semibold text-[#12201C] whitespace-nowrap">
                                     <a href="{{ route('dashboard', ['patient_id' => $patient->id, 'date' => $d->toDateString()]) }}" class="hover:text-[#0F766E] hover:underline" title="View details on Home screen">
                                         {{ $d->format('j M') }}
-                                        @if($log->formatted_time)
-                                            <span class="text-[10px] text-[#4B5F59] font-normal block">{{ $log->formatted_time }}</span>
-                                        @endif
                                     </a>
                                 </td>
 
@@ -180,6 +177,9 @@
                                             <span class="font-medium text-[#12201C]">
                                                 {{ $log->nashta_sugar }}
                                             </span>
+                                        @endif
+                                        @if($log->formatted_nashta_time)
+                                            <span class="text-[9px] text-[#4B5F59] font-normal block leading-tight mt-0.5">{{ $log->formatted_nashta_time }}</span>
                                         @endif
                                     @else
                                         <span class="text-[#4B5F59]">-</span>
@@ -211,6 +211,9 @@
                                                 {{ $log->lunch_sugar }}
                                             </span>
                                         @endif
+                                        @if($log->formatted_lunch_time)
+                                            <span class="text-[9px] text-[#4B5F59] font-normal block leading-tight mt-0.5">{{ $log->formatted_lunch_time }}</span>
+                                        @endif
                                     @else
                                         <span class="text-[#4B5F59]">-</span>
                                     @endif
@@ -227,6 +230,9 @@
                                             <span class="font-medium text-[#12201C]">
                                                 {{ $log->dinner_sugar }}
                                             </span>
+                                        @endif
+                                        @if($log->formatted_dinner_time)
+                                            <span class="text-[9px] text-[#4B5F59] font-normal block leading-tight mt-0.5">{{ $log->formatted_dinner_time }}</span>
                                         @endif
                                     @else
                                         <span class="text-[#4B5F59]">-</span>

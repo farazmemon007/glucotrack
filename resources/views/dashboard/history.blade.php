@@ -81,6 +81,11 @@
                                         <div class="flex items-center gap-2">
                                             <span class="text-[15px] font-bold text-[#12201C]">{{ $r['sugar'] }} mg/dL</span>
                                             <x-status-badge :status="$r['status']" />
+                                            @if(!empty($r['time']))
+                                                <span class="text-[11px] font-semibold text-[#0F766E] bg-[#DDF0EC] px-2 py-0.5 rounded-full">
+                                                    {{ $r['time'] }}
+                                                </span>
+                                            @endif
                                         </div>
                                         <span class="text-[12px] text-[#4B5F59] mt-0.5">
                                             {{ $r['label'] }} ({{ $r['timing'] === 'before' ? 'Before meal' : 'After meal' }})

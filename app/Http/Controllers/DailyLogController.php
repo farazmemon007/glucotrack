@@ -73,6 +73,15 @@ class DailyLogController extends Controller
         $validated['lunch_sugar'] = $validated['lunch_sugar_before'] ?? $validated['lunch_sugar_after'] ?? $validated['lunch_sugar'] ?? null;
         $validated['dinner_sugar'] = $validated['dinner_sugar_before'] ?? $validated['dinner_sugar_after'] ?? $validated['dinner_sugar'] ?? null;
 
+        // Sync meal times
+        $validated['nashta_time'] = $validated['nashta_time_before'] ?? $validated['nashta_time_after'] ?? $validated['nashta_time'] ?? null;
+        $validated['lunch_time'] = $validated['lunch_time_before'] ?? $validated['lunch_time_after'] ?? $validated['lunch_time'] ?? null;
+        $validated['dinner_time'] = $validated['dinner_time_before'] ?? $validated['dinner_time_after'] ?? $validated['dinner_time'] ?? null;
+
+        if (empty($validated['log_time'])) {
+            $validated['log_time'] = $validated['dinner_time'] ?? $validated['lunch_time'] ?? $validated['nashta_time'] ?? null;
+        }
+
         $logDate = $validated['log_date'];
 
         // If an entry already exists for this patient on this date, merge newly entered fields
@@ -100,6 +109,15 @@ class DailyLogController extends Controller
             if (!empty($validated['nashta_timing'])) {
                 $updateData['nashta_timing'] = $validated['nashta_timing'];
             }
+            if (!empty($validated['nashta_time_before'])) {
+                $updateData['nashta_time_before'] = $validated['nashta_time_before'];
+            }
+            if (!empty($validated['nashta_time_after'])) {
+                $updateData['nashta_time_after'] = $validated['nashta_time_after'];
+            }
+            if (!empty($validated['nashta_time'])) {
+                $updateData['nashta_time'] = $validated['nashta_time'];
+            }
             if (isset($validated['insulin_morning']) && $validated['insulin_morning'] !== null && $validated['insulin_morning'] !== '') {
                 $updateData['insulin_morning'] = $validated['insulin_morning'];
             }
@@ -117,6 +135,15 @@ class DailyLogController extends Controller
             if (!empty($validated['lunch_timing'])) {
                 $updateData['lunch_timing'] = $validated['lunch_timing'];
             }
+            if (!empty($validated['lunch_time_before'])) {
+                $updateData['lunch_time_before'] = $validated['lunch_time_before'];
+            }
+            if (!empty($validated['lunch_time_after'])) {
+                $updateData['lunch_time_after'] = $validated['lunch_time_after'];
+            }
+            if (!empty($validated['lunch_time'])) {
+                $updateData['lunch_time'] = $validated['lunch_time'];
+            }
 
             // Dinner
             if (isset($validated['dinner_sugar_before']) && $validated['dinner_sugar_before'] !== null && $validated['dinner_sugar_before'] !== '') {
@@ -130,6 +157,15 @@ class DailyLogController extends Controller
             }
             if (!empty($validated['dinner_timing'])) {
                 $updateData['dinner_timing'] = $validated['dinner_timing'];
+            }
+            if (!empty($validated['dinner_time_before'])) {
+                $updateData['dinner_time_before'] = $validated['dinner_time_before'];
+            }
+            if (!empty($validated['dinner_time_after'])) {
+                $updateData['dinner_time_after'] = $validated['dinner_time_after'];
+            }
+            if (!empty($validated['dinner_time'])) {
+                $updateData['dinner_time'] = $validated['dinner_time'];
             }
             if (isset($validated['insulin_night']) && $validated['insulin_night'] !== null && $validated['insulin_night'] !== '') {
                 $updateData['insulin_night'] = $validated['insulin_night'];
@@ -147,38 +183,22 @@ class DailyLogController extends Controller
                 $updateData['needs_check'] = $request->boolean('needs_check');
             }
 
-            try {
-                $existing->update($updateData);
-            } catch (\Illuminate\Database\QueryException $e) {
-                if (isset($e->errorInfo[1]) && $e->errorInfo[1] === 1054 && isset($updateData['log_time'])) {
-                    unset($updateData['log_time']);
-                    $existing->update($updateData);
-                } else {
-                    throw $e;
-                }
-            }
+            $this->saveRecordSafely($existing, $updateData);
 
             return redirect()->route('dashboard', ['patient' => $patient->id])
                 ->with('success', 'Daily log saved successfully.');
         }
 
         try {
-            DailyLog::create($validated);
+            $this->saveRecordSafely(DailyLog::class, $validated);
         } catch (\Illuminate\Database\QueryException $e) {
-            // If unknown column error (1054) for log_time, retry without log_time in case migration hasn't run yet
-            if (isset($e->errorInfo[1]) && $e->errorInfo[1] === 1054 && isset($validated['log_time'])) {
-                unset($validated['log_time']);
-                DailyLog::create($validated);
-                return redirect()->route('dashboard', ['patient' => $patient->id])
-                    ->with('success', 'Daily log saved successfully.');
-            }
             // If duplicate entry error (code 1062) occurs, update/merge existing record safely
             if (isset($e->errorInfo[1]) && $e->errorInfo[1] === 1062) {
                 $existing = DailyLog::where('patient_id', $patient->id)
                     ->whereDate('log_date', $validated['log_date'])
                     ->first();
                 if ($existing) {
-                    $existing->update($validated);
+                    $this->saveRecordSafely($existing, $validated);
                     return redirect()->route('dashboard', ['patient' => $patient->id])
                         ->with('success', 'Daily log saved successfully.');
                 }
@@ -246,21 +266,42 @@ class DailyLogController extends Controller
         $validated['lunch_sugar'] = $validated['lunch_sugar_before'] ?? $validated['lunch_sugar_after'] ?? $validated['lunch_sugar'] ?? null;
         $validated['dinner_sugar'] = $validated['dinner_sugar_before'] ?? $validated['dinner_sugar_after'] ?? $validated['dinner_sugar'] ?? null;
 
-        try {
-            $log->update($validated);
-        } catch (\Illuminate\Database\QueryException $e) {
-            // If unknown column error (1054) for log_time, retry without log_time in case migration hasn't run yet
-            if (isset($e->errorInfo[1]) && $e->errorInfo[1] === 1054 && isset($validated['log_time'])) {
-                unset($validated['log_time']);
-                $log->update($validated);
-                return redirect()->route('dashboard', ['patient' => $patient->id])
-                    ->with('success', 'Daily log updated successfully.');
-            }
-            throw $e;
+        // Sync meal times
+        $validated['nashta_time'] = $validated['nashta_time_before'] ?? $validated['nashta_time_after'] ?? $validated['nashta_time'] ?? null;
+        $validated['lunch_time'] = $validated['lunch_time_before'] ?? $validated['lunch_time_after'] ?? $validated['lunch_time'] ?? null;
+        $validated['dinner_time'] = $validated['dinner_time_before'] ?? $validated['dinner_time_after'] ?? $validated['dinner_time'] ?? null;
+
+        if (empty($validated['log_time'])) {
+            $validated['log_time'] = $validated['dinner_time'] ?? $validated['lunch_time'] ?? $validated['nashta_time'] ?? null;
         }
+
+        $this->saveRecordSafely($log, $validated);
 
         return redirect()->route('dashboard', ['patient' => $patient->id])
             ->with('success', 'Daily log updated successfully.');
+    }
+
+    private function saveRecordSafely(DailyLog|string $target, array $data): DailyLog
+    {
+        try {
+            if ($target instanceof DailyLog) {
+                $target->update($data);
+                return $target;
+            }
+            return DailyLog::create($data);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // If unknown column error (1054) occurs, strip the unknown column and retry recursively
+            if (isset($e->errorInfo[1]) && $e->errorInfo[1] === 1054) {
+                if (preg_match("/Unknown column '([^']+)'/", $e->getMessage(), $matches)) {
+                    $col = $matches[1];
+                    if (array_key_exists($col, $data)) {
+                        unset($data[$col]);
+                        return $this->saveRecordSafely($target, $data);
+                    }
+                }
+            }
+            throw $e;
+        }
     }
 
     /**

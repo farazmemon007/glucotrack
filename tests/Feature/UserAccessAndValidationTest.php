@@ -268,7 +268,7 @@ class UserAccessAndValidationTest extends TestCase
         $response = $this->actingAs($caregiver)->post("/patients/{$patient->id}/logs", [
             'log_date' => $today,
             'lunch_sugar_before' => 140,
-            'log_time' => '01:30 PM',
+            'lunch_time_before' => '01:30 PM',
         ]);
         $response->assertSessionHasNoErrors();
         $this->assertDatabaseHas('daily_logs', [
@@ -276,8 +276,32 @@ class UserAccessAndValidationTest extends TestCase
             'log_date' => $today,
             'nashta_sugar_before' => 153,
             'lunch_sugar_before' => 140,
+            'lunch_time_before' => '13:30:00',
             'insulin_morning' => 30,
-            'log_time' => '13:30:00',
         ]);
+
+        // 4. Adding dinner reading on today with dinner_time
+        $response = $this->actingAs($caregiver)->post("/patients/{$patient->id}/logs", [
+            'log_date' => $today,
+            'dinner_sugar_before' => 165,
+            'dinner_time_before' => '08:45 PM',
+            'insulin_night' => 28,
+        ]);
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('daily_logs', [
+            'patient_id' => $patient->id,
+            'log_date' => $today,
+            'nashta_sugar_before' => 153,
+            'lunch_sugar_before' => 140,
+            'dinner_sugar_before' => 165,
+            'dinner_time_before' => '20:45:00',
+            'insulin_night' => 28,
+        ]);
+
+        // 5. Sheet view displays each reading's individual time
+        $sheetRes = $this->actingAs($caregiver)->get("/patients/{$patient->id}/sheet");
+        $sheetRes->assertStatus(200);
+        $sheetRes->assertSee('1:30 PM');
+        $sheetRes->assertSee('8:45 PM');
     }
 }

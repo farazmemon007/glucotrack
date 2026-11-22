@@ -154,9 +154,6 @@
                 <tr>
                     <td class="date-col">
                         {{ $log->log_date->format('j M') }}
-                        @if($log->formatted_time)
-                            <br><span style="font-size: 7px; color: #4B5F59;">{{ $log->formatted_time }}</span>
-                        @endif
                     </td>
                     <td class="sugar-col">
                         @if($log->nashta_sugar !== null)
@@ -164,6 +161,9 @@
                                 <span class="high-badge">{{ $log->nashta_sugar }}</span>
                             @else
                                 {{ $log->nashta_sugar }}
+                            @endif
+                            @if($log->formatted_nashta_time)
+                                <br><span style="font-size: 7px; color: #4B5F59;">{{ $log->formatted_nashta_time }}</span>
                             @endif
                         @else
                             -
@@ -185,6 +185,9 @@
                             @else
                                 {{ $log->lunch_sugar }}
                             @endif
+                            @if($log->formatted_lunch_time)
+                                <br><span style="font-size: 7px; color: #4B5F59;">{{ $log->formatted_lunch_time }}</span>
+                            @endif
                         @else
                             -
                         @endif
@@ -195,6 +198,9 @@
                                 <span class="high-badge">{{ $log->dinner_sugar }}</span>
                             @else
                                 {{ $log->dinner_sugar }}
+                            @endif
+                            @if($log->formatted_dinner_time)
+                                <br><span style="font-size: 7px; color: #4B5F59;">{{ $log->formatted_dinner_time }}</span>
                             @endif
                         @else
                             -

@@ -38,8 +38,8 @@
                 </div>
             @endif
 
-            <!-- Date & Time Picker Field -->
-            <x-card class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Date Picker Field -->
+            <x-card>
                 <div class="flex flex-col gap-1.5">
                     <label for="log_date" class="text-[13px] text-[#4B5F59] font-normal">
                         {{ __('app.date_label') }} <span class="text-[#9A3412]">*</span>
@@ -57,38 +57,15 @@
                         <span class="text-[12px] text-[#9A3412] mt-1">{{ $message }}</span>
                     @enderror
                 </div>
-
-                <div class="flex flex-col gap-1.5">
-                    <div class="flex items-center justify-between">
-                        <label for="log_time" class="text-[13px] text-[#4B5F59] font-normal">
-                            Reading Time <span class="text-[11px] text-[#0F766E] font-medium">(Optional)</span>
-                        </label>
-                        <button 
-                            type="button" 
-                            onclick="const now = new Date(); document.getElementById('log_time').value = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');" 
-                            class="text-[11px] font-bold text-[#0F766E] hover:underline cursor-pointer"
-                        >
-                            Set current time
-                        </button>
-                    </div>
-                    <input 
-                        type="time" 
-                        id="log_time" 
-                        name="log_time" 
-                        value="{{ old('log_time', '') }}" 
-                        class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-4 text-[15px] font-semibold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
-                    >
-                    @error('log_time')
-                        <span class="text-[12px] text-[#9A3412] mt-1">{{ $message }}</span>
-                    @enderror
-                </div>
             </x-card>
 
             <!-- Card Morning (Nashta) -->
             <x-card class="flex flex-col gap-3.5" x-data="{ 
                 timing: '{{ old('nashta_timing', 'before') }}',
                 sugarBefore: '{{ old('nashta_sugar_before', '') }}',
-                sugarAfter: '{{ old('nashta_sugar_after', '') }}'
+                sugarAfter: '{{ old('nashta_sugar_after', '') }}',
+                timeBefore: '{{ old('nashta_time_before', '') }}',
+                timeAfter: '{{ old('nashta_time_after', '') }}'
             }">
                 <div class="flex items-center justify-between">
                     <h2 class="text-[15px] font-bold text-[#12201C]">
@@ -100,6 +77,8 @@
                 <input type="hidden" name="nashta_timing" :value="timing">
                 <input type="hidden" name="nashta_sugar_before" :value="sugarBefore">
                 <input type="hidden" name="nashta_sugar_after" :value="sugarAfter">
+                <input type="hidden" name="nashta_time_before" :value="timeBefore">
+                <input type="hidden" name="nashta_time_after" :value="timeAfter">
 
                 <!-- Timing Toggle -->
                 <div class="bg-[#E3EBE8] p-[4px] rounded-[22px] flex items-center w-full">
@@ -127,62 +106,106 @@
                     </button>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 mt-1">
-                    <!-- Before Breakfast Sugar Input -->
-                    <div x-show="timing === 'before'">
-                        <label class="block text-[12px] text-[#0F766E] font-bold mb-1">
-                            Before breakfast sugar (mg/dL)
-                        </label>
-                        <input 
-                            type="number" 
-                            x-model="sugarBefore"
-                            min="20" 
-                            max="600" 
-                            placeholder="e.g. 110"
-                            class="w-full h-[48px] bg-white border-2 border-[#0F766E] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
-                        >
+                <!-- Before Breakfast Form Group -->
+                <div x-show="timing === 'before'" class="flex flex-col gap-3 mt-1">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[12px] text-[#0F766E] font-bold mb-1">
+                                Before breakfast sugar (mg/dL)
+                            </label>
+                            <input 
+                                type="number" 
+                                x-model="sugarBefore"
+                                min="20" 
+                                max="600" 
+                                placeholder="e.g. 110"
+                                class="w-full h-[48px] bg-white border-2 border-[#0F766E] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                            >
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-[12px] text-[#4B5F59] font-normal">
+                                    Time <span class="text-[11px] text-[#0F766E] font-medium">(Optional)</span>
+                                </label>
+                                <button 
+                                    type="button" 
+                                    @click="const now = new Date(); timeBefore = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');" 
+                                    class="text-[11px] font-bold text-[#0F766E] hover:underline cursor-pointer"
+                                >
+                                    Set current time
+                                </button>
+                            </div>
+                            <input 
+                                type="time" 
+                                x-model="timeBefore"
+                                class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-3 text-[15px] font-semibold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                            >
+                        </div>
                     </div>
+                </div>
 
-                    <!-- After Breakfast Sugar Input -->
-                    <div x-show="timing === 'after'">
-                        <label class="block text-[12px] text-[#0F766E] font-bold mb-1">
-                            After breakfast sugar (mg/dL)
-                        </label>
-                        <input 
-                            type="number" 
-                            x-model="sugarAfter"
-                            min="20" 
-                            max="600" 
-                            placeholder="e.g. 160"
-                            class="w-full h-[48px] bg-white border-2 border-[#0F766E] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
-                        >
+                <!-- After Breakfast Form Group -->
+                <div x-show="timing === 'after'" class="flex flex-col gap-3 mt-1">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[12px] text-[#0F766E] font-bold mb-1">
+                                After breakfast sugar (mg/dL)
+                            </label>
+                            <input 
+                                type="number" 
+                                x-model="sugarAfter"
+                                min="20" 
+                                max="600" 
+                                placeholder="e.g. 160"
+                                class="w-full h-[48px] bg-white border-2 border-[#0F766E] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                            >
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-[12px] text-[#4B5F59] font-normal">
+                                    Time <span class="text-[11px] text-[#0F766E] font-medium">(Optional)</span>
+                                </label>
+                                <button 
+                                    type="button" 
+                                    @click="const now = new Date(); timeAfter = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');" 
+                                    class="text-[11px] font-bold text-[#0F766E] hover:underline cursor-pointer"
+                                >
+                                    Set current time
+                                </button>
+                            </div>
+                            <input 
+                                type="time" 
+                                x-model="timeAfter"
+                                class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-3 text-[15px] font-semibold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                            >
+                        </div>
                     </div>
+                </div>
 
-                    <!-- Insulin Morning -->
-                    <div>
-                        <label for="insulin_morning" class="block text-[12px] text-[#4B5F59] font-normal mb-1">
-                            {{ __('app.insulin_morning_label') }}
-                        </label>
-                        <input 
-                            type="number" 
-                            step="0.5" 
-                            id="insulin_morning" 
-                            name="insulin_morning" 
-                            value="{{ old('insulin_morning', '') }}" 
-                            min="0" 
-                            max="200" 
-                            placeholder="{{ $patient->usual_morning_dose ? 'e.g. ' . $patient->usual_morning_dose : 'e.g. 30' }}"
-                            class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
-                        >
-                    </div>
+                <!-- Insulin Morning -->
+                <div>
+                    <label for="insulin_morning" class="block text-[12px] text-[#4B5F59] font-normal mb-1">
+                        {{ __('app.insulin_morning_label') }}
+                    </label>
+                    <input 
+                        type="number" 
+                        step="0.5" 
+                        id="insulin_morning" 
+                        name="insulin_morning" 
+                        value="{{ old('insulin_morning', '') }}" 
+                        min="0" 
+                        max="200" 
+                        placeholder="{{ $patient->usual_morning_dose ? 'e.g. ' . $patient->usual_morning_dose : 'e.g. 30' }}"
+                        class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                    >
                 </div>
 
                 <div class="text-[11px] text-[#4B5F59] min-h-[16px]">
                     <span x-show="timing === 'before' && sugarAfter">
-                        Recorded after breakfast: <strong class="text-[#0F766E]" x-text="sugarAfter + ' mg/dL'"></strong> &bull; <button type="button" @click="timing = 'after'" class="text-[#0F766E] underline cursor-pointer">Edit after breakfast</button>
+                        Recorded after breakfast: <strong class="text-[#0F766E]" x-text="sugarAfter + ' mg/dL' + (timeAfter ? ' (' + timeAfter + ')' : '')"></strong> &bull; <button type="button" @click="timing = 'after'" class="text-[#0F766E] underline cursor-pointer">Edit after breakfast</button>
                     </span>
                     <span x-show="timing === 'after' && sugarBefore">
-                        Recorded before breakfast: <strong class="text-[#0F766E]" x-text="sugarBefore + ' mg/dL'"></strong> &bull; <button type="button" @click="timing = 'before'" class="text-[#0F766E] underline cursor-pointer">Edit before breakfast</button>
+                        Recorded before breakfast: <strong class="text-[#0F766E]" x-text="sugarBefore + ' mg/dL' + (timeBefore ? ' (' + timeBefore + ')' : '')"></strong> &bull; <button type="button" @click="timing = 'before'" class="text-[#0F766E] underline cursor-pointer">Edit before breakfast</button>
                     </span>
                 </div>
             </x-card>
@@ -191,7 +214,9 @@
             <x-card class="flex flex-col gap-3.5" x-data="{ 
                 timing: '{{ old('lunch_timing', 'before') }}',
                 sugarBefore: '{{ old('lunch_sugar_before', '') }}',
-                sugarAfter: '{{ old('lunch_sugar_after', '') }}'
+                sugarAfter: '{{ old('lunch_sugar_after', '') }}',
+                timeBefore: '{{ old('lunch_time_before', '') }}',
+                timeAfter: '{{ old('lunch_time_after', '') }}'
             }">
                 <div class="flex items-center justify-between">
                     <h2 class="text-[15px] font-bold text-[#12201C]">
@@ -203,6 +228,8 @@
                 <input type="hidden" name="lunch_timing" :value="timing">
                 <input type="hidden" name="lunch_sugar_before" :value="sugarBefore">
                 <input type="hidden" name="lunch_sugar_after" :value="sugarAfter">
+                <input type="hidden" name="lunch_time_before" :value="timeBefore">
+                <input type="hidden" name="lunch_time_after" :value="timeAfter">
 
                 <!-- Timing Toggle -->
                 <div class="bg-[#E3EBE8] p-[4px] rounded-[22px] flex items-center w-full">
@@ -230,9 +257,9 @@
                     </button>
                 </div>
 
-                <div>
-                    <!-- Before Lunch Sugar Input -->
-                    <div x-show="timing === 'before'">
+                <!-- Before Lunch Form Group -->
+                <div x-show="timing === 'before'" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+                    <div>
                         <label class="block text-[12px] text-[#0F766E] font-bold mb-1">
                             Before lunch sugar (mg/dL)
                         </label>
@@ -242,12 +269,33 @@
                             min="20" 
                             max="600" 
                             placeholder="e.g. 120"
-                            class="w-full h-[48px] bg-white border-2 border-[#0F766E] rounded-[12px] px-4 text-[16px] font-bold text-[#12201C] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                            class="w-full h-[48px] bg-white border-2 border-[#0F766E] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
                         >
                     </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-[12px] text-[#4B5F59] font-normal">
+                                Time <span class="text-[11px] text-[#0F766E] font-medium">(Optional)</span>
+                            </label>
+                            <button 
+                                type="button" 
+                                @click="const now = new Date(); timeBefore = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');" 
+                                class="text-[11px] font-bold text-[#0F766E] hover:underline cursor-pointer"
+                            >
+                                Set current time
+                            </button>
+                        </div>
+                        <input 
+                            type="time" 
+                            x-model="timeBefore"
+                            class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-3 text-[15px] font-semibold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                        >
+                    </div>
+                </div>
 
-                    <!-- After Lunch Sugar Input -->
-                    <div x-show="timing === 'after'">
+                <!-- After Lunch Form Group -->
+                <div x-show="timing === 'after'" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+                    <div>
                         <label class="block text-[12px] text-[#0F766E] font-bold mb-1">
                             After lunch sugar (mg/dL)
                         </label>
@@ -257,17 +305,36 @@
                             min="20" 
                             max="600" 
                             placeholder="e.g. 165"
-                            class="w-full h-[48px] bg-white border-2 border-[#0F766E] rounded-[12px] px-4 text-[16px] font-bold text-[#12201C] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                            class="w-full h-[48px] bg-white border-2 border-[#0F766E] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
+                        >
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-[12px] text-[#4B5F59] font-normal">
+                                Time <span class="text-[11px] text-[#0F766E] font-medium">(Optional)</span>
+                            </label>
+                            <button 
+                                type="button" 
+                                @click="const now = new Date(); timeAfter = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');" 
+                                class="text-[11px] font-bold text-[#0F766E] hover:underline cursor-pointer"
+                            >
+                                Set current time
+                            </button>
+                        </div>
+                        <input 
+                            type="time" 
+                            x-model="timeAfter"
+                            class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-3 text-[15px] font-semibold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
                         >
                     </div>
                 </div>
 
                 <div class="text-[11px] text-[#4B5F59] min-h-[16px]">
                     <span x-show="timing === 'before' && sugarAfter">
-                        Recorded after lunch: <strong class="text-[#0F766E]" x-text="sugarAfter + ' mg/dL'"></strong> &bull; <button type="button" @click="timing = 'after'" class="text-[#0F766E] underline cursor-pointer">Edit after lunch</button>
+                        Recorded after lunch: <strong class="text-[#0F766E]" x-text="sugarAfter + ' mg/dL' + (timeAfter ? ' (' + timeAfter + ')' : '')"></strong> &bull; <button type="button" @click="timing = 'after'" class="text-[#0F766E] underline cursor-pointer">Edit after lunch</button>
                     </span>
                     <span x-show="timing === 'after' && sugarBefore">
-                        Recorded before lunch: <strong class="text-[#0F766E]" x-text="sugarBefore + ' mg/dL'"></strong> &bull; <button type="button" @click="timing = 'before'" class="text-[#0F766E] underline cursor-pointer">Edit before lunch</button>
+                        Recorded before lunch: <strong class="text-[#0F766E]" x-text="sugarBefore + ' mg/dL' + (timeBefore ? ' (' + timeBefore + ')' : '')"></strong> &bull; <button type="button" @click="timing = 'before'" class="text-[#0F766E] underline cursor-pointer">Edit before lunch</button>
                     </span>
                 </div>
             </x-card>
@@ -276,7 +343,9 @@
             <x-card class="flex flex-col gap-3.5" x-data="{ 
                 timing: '{{ old('dinner_timing', 'before') }}',
                 sugarBefore: '{{ old('dinner_sugar_before', '') }}',
-                sugarAfter: '{{ old('dinner_sugar_after', '') }}'
+                sugarAfter: '{{ old('dinner_sugar_after', '') }}',
+                timeBefore: '{{ old('dinner_time_before', '') }}',
+                timeAfter: '{{ old('dinner_time_after', '') }}'
             }">
                 <div class="flex items-center justify-between">
                     <h2 class="text-[15px] font-bold text-[#12201C]">
@@ -288,6 +357,8 @@
                 <input type="hidden" name="dinner_timing" :value="timing">
                 <input type="hidden" name="dinner_sugar_before" :value="sugarBefore">
                 <input type="hidden" name="dinner_sugar_after" :value="sugarAfter">
+                <input type="hidden" name="dinner_time_before" :value="timeBefore">
+                <input type="hidden" name="dinner_time_after" :value="timeAfter">
 
                 <!-- Timing Toggle -->
                 <div class="bg-[#E3EBE8] p-[4px] rounded-[22px] flex items-center w-full">
@@ -315,9 +386,9 @@
                     </button>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 mt-1">
-                    <!-- Before Dinner Sugar Input -->
-                    <div x-show="timing === 'before'">
+                <!-- Before Dinner Form Group -->
+                <div x-show="timing === 'before'" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+                    <div>
                         <label class="block text-[12px] text-[#0F766E] font-bold mb-1">
                             Before dinner sugar (mg/dL)
                         </label>
@@ -330,9 +401,30 @@
                             class="w-full h-[48px] bg-white border-2 border-[#0F766E] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
                         >
                     </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-[12px] text-[#4B5F59] font-normal">
+                                Time <span class="text-[11px] text-[#0F766E] font-medium">(Optional)</span>
+                            </label>
+                            <button 
+                                type="button" 
+                                @click="const now = new Date(); timeBefore = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');" 
+                                class="text-[11px] font-bold text-[#0F766E] hover:underline cursor-pointer"
+                            >
+                                Set current time
+                            </button>
+                        </div>
+                        <input 
+                            type="time" 
+                            x-model="timeBefore"
+                            class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-3 text-[15px] font-semibold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                        >
+                    </div>
+                </div>
 
-                    <!-- After Dinner Sugar Input -->
-                    <div x-show="timing === 'after'">
+                <!-- After Dinner Form Group -->
+                <div x-show="timing === 'after'" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+                    <div>
                         <label class="block text-[12px] text-[#0F766E] font-bold mb-1">
                             After dinner sugar (mg/dL)
                         </label>
@@ -345,32 +437,51 @@
                             class="w-full h-[48px] bg-white border-2 border-[#0F766E] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:ring-1 focus:ring-[#0F766E]"
                         >
                     </div>
-
-                    <!-- Insulin Night -->
                     <div>
-                        <label for="insulin_night" class="block text-[12px] text-[#4B5F59] font-normal mb-1">
-                            {{ __('app.insulin_night_label') }}
-                        </label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-[12px] text-[#4B5F59] font-normal">
+                                Time <span class="text-[11px] text-[#0F766E] font-medium">(Optional)</span>
+                            </label>
+                            <button 
+                                type="button" 
+                                @click="const now = new Date(); timeAfter = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');" 
+                                class="text-[11px] font-bold text-[#0F766E] hover:underline cursor-pointer"
+                            >
+                                Set current time
+                            </button>
+                        </div>
                         <input 
-                            type="number" 
-                            step="0.5" 
-                            id="insulin_night" 
-                            name="insulin_night" 
-                            value="{{ old('insulin_night', '') }}" 
-                            min="0" 
-                            max="200" 
-                            placeholder="{{ $patient->usual_night_dose ? 'e.g. ' . $patient->usual_night_dose : 'e.g. 30' }}"
-                            class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                            type="time" 
+                            x-model="timeAfter"
+                            class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-3 text-[15px] font-semibold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
                         >
                     </div>
                 </div>
 
+                <!-- Insulin Night -->
+                <div>
+                    <label for="insulin_night" class="block text-[12px] text-[#4B5F59] font-normal mb-1">
+                        {{ __('app.insulin_night_label') }}
+                    </label>
+                    <input 
+                        type="number" 
+                        step="0.5" 
+                        id="insulin_night" 
+                        name="insulin_night" 
+                        value="{{ old('insulin_night', '') }}" 
+                        min="0" 
+                        max="200" 
+                        placeholder="{{ $patient->usual_night_dose ? 'e.g. ' . $patient->usual_night_dose : 'e.g. 30' }}"
+                        class="w-full h-[48px] bg-white border border-[#CBD8D4] rounded-[12px] px-3 text-[16px] font-bold text-[#12201C] focus:outline-none focus:border-[#0F766E] focus:ring-1 focus:ring-[#0F766E]"
+                    >
+                </div>
+
                 <div class="text-[11px] text-[#4B5F59] min-h-[16px]">
                     <span x-show="timing === 'before' && sugarAfter">
-                        Recorded after dinner: <strong class="text-[#0F766E]" x-text="sugarAfter + ' mg/dL'"></strong> &bull; <button type="button" @click="timing = 'after'" class="text-[#0F766E] underline cursor-pointer">Edit after dinner</button>
+                        Recorded after dinner: <strong class="text-[#0F766E]" x-text="sugarAfter + ' mg/dL' + (timeAfter ? ' (' + timeAfter + ')' : '')"></strong> &bull; <button type="button" @click="timing = 'after'" class="text-[#0F766E] underline cursor-pointer">Edit after dinner</button>
                     </span>
                     <span x-show="timing === 'after' && sugarBefore">
-                        Recorded before dinner: <strong class="text-[#0F766E]" x-text="sugarBefore + ' mg/dL'"></strong> &bull; <button type="button" @click="timing = 'before'" class="text-[#0F766E] underline cursor-pointer">Edit before dinner</button>
+                        Recorded before dinner: <strong class="text-[#0F766E]" x-text="sugarBefore + ' mg/dL' + (timeBefore ? ' (' + timeBefore + ')' : '')"></strong> &bull; <button type="button" @click="timing = 'before'" class="text-[#0F766E] underline cursor-pointer">Edit before dinner</button>
                     </span>
                 </div>
             </x-card>
