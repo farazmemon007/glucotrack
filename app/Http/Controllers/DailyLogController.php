@@ -82,6 +82,13 @@ class DailyLogController extends Controller
         try {
             DailyLog::create($validated);
         } catch (\Illuminate\Database\QueryException $e) {
+            // If unknown column error (1054) for log_time, retry without log_time in case migration hasn't run yet
+            if (isset($e->errorInfo[1]) && $e->errorInfo[1] === 1054 && isset($validated['log_time'])) {
+                unset($validated['log_time']);
+                DailyLog::create($validated);
+                return redirect()->route('dashboard', ['patient' => $patient->id])
+                    ->with('success', 'Daily log saved successfully.');
+            }
             // If duplicate entry error (code 1062) occurs, update/merge existing record safely
             if (isset($e->errorInfo[1]) && $e->errorInfo[1] === 1062) {
                 $existing = DailyLog::where('patient_id', $patient->id)
@@ -156,7 +163,18 @@ class DailyLogController extends Controller
         $validated['lunch_sugar'] = $validated['lunch_sugar_before'] ?? $validated['lunch_sugar_after'] ?? $validated['lunch_sugar'] ?? null;
         $validated['dinner_sugar'] = $validated['dinner_sugar_before'] ?? $validated['dinner_sugar_after'] ?? $validated['dinner_sugar'] ?? null;
 
-        $log->update($validated);
+        try {
+            $log->update($validated);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // If unknown column error (1054) for log_time, retry without log_time in case migration hasn't run yet
+            if (isset($e->errorInfo[1]) && $e->errorInfo[1] === 1054 && isset($validated['log_time'])) {
+                unset($validated['log_time']);
+                $log->update($validated);
+                return redirect()->route('dashboard', ['patient' => $patient->id])
+                    ->with('success', 'Daily log updated successfully.');
+            }
+            throw $e;
+        }
 
         return redirect()->route('dashboard', ['patient' => $patient->id])
             ->with('success', 'Daily log updated successfully.');
