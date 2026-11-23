@@ -196,7 +196,27 @@ class DailyLogApiController extends Controller
     {
         $this->authorizeAccess($request->user(), $patient);
 
-        $stats = $this->statsService->calculateMetrics($patient);
+        $days = $request->input('days', 30);
+        $month = $request->input('month');
+        $year = $request->input('year');
+
+        $query = DailyLog::where('patient_id', $patient->id)->orderBy('log_date', 'desc');
+
+        if ($month && $year) {
+            $query->whereMonth('log_date', $month)->whereYear('log_date', $year);
+            $logs = $query->get();
+            $stats = $this->statsService->calculateStats($patient, null, $logs);
+        } else {
+            $stats = $this->statsService->calculateStats($patient, (int) $days);
+        }
+
+        // Remove full Eloquent model objects from stats response to ensure fast, clean JSON
+        unset($stats['logs']);
+        if (isset($stats['readings'])) {
+            foreach ($stats['readings'] as &$r) {
+                unset($r['log']);
+            }
+        }
 
         return response()->json([
             'success' => true,
