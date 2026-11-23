@@ -3,7 +3,9 @@ import '../models/patient_model.dart';
 import '../services/api_service.dart';
 
 class PatientsScreen extends StatefulWidget {
-  const PatientsScreen({super.key});
+  final VoidCallback? onActiveChanged;
+
+  const PatientsScreen({super.key, this.onActiveChanged});
 
   @override
   State<PatientsScreen> createState() => _PatientsScreenState();
@@ -52,6 +54,7 @@ class _PatientsScreenState extends State<PatientsScreen> {
     setState(() {
       _activeId = patientId;
     });
+    widget.onActiveChanged?.call();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Active patient updated!')),

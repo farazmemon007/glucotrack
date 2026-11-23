@@ -9,6 +9,7 @@ import '../models/user_model.dart';
 class ApiService {
   static const String _keyToken = 'auth_token';
   static const String _keyActivePatient = 'active_patient_id';
+  static const Duration _timeoutDuration = Duration(seconds: 20);
 
   // Token management
   static Future<String?> getToken() async {
@@ -48,18 +49,28 @@ class ApiService {
     };
   }
 
+  static dynamic _parseBody(http.Response response) {
+    try {
+      return jsonDecode(response.body);
+    } catch (_) {
+      throw Exception('Server error (${response.statusCode}). Please verify connection.');
+    }
+  }
+
   // 1. Auth: Login
   static Future<Map<String, dynamic>> login(String login, String password) async {
     final baseUrl = await ApiConfig.getBaseUrl();
     final url = Uri.parse('$baseUrl/login');
 
-    final response = await http.post(
-      url,
-      headers: await _headers(),
-      body: jsonEncode({'login': login, 'password': password}),
-    );
+    final response = await http
+        .post(
+          url,
+          headers: await _headers(),
+          body: jsonEncode({'login': login, 'password': password}),
+        )
+        .timeout(_timeoutDuration);
 
-    final data = jsonDecode(response.body);
+    final data = _parseBody(response);
     if (response.statusCode == 200 && data['success'] == true) {
       await saveToken(data['token']);
       if (data['patients'] != null && (data['patients'] as List).isNotEmpty) {
@@ -68,7 +79,7 @@ class ApiService {
       }
       return data;
     } else {
-      throw Exception(data['message'] ?? 'Login failed');
+      throw Exception(data['message'] ?? 'Login failed. Please check credentials.');
     }
   }
 
@@ -82,19 +93,21 @@ class ApiService {
     final baseUrl = await ApiConfig.getBaseUrl();
     final url = Uri.parse('$baseUrl/register');
 
-    final response = await http.post(
-      url,
-      headers: await _headers(),
-      body: jsonEncode({
-        'name': name,
-        'phone': phone,
-        'email': email,
-        'password': password,
-        'role': 'caregiver',
-      }),
-    );
+    final response = await http
+        .post(
+          url,
+          headers: await _headers(),
+          body: jsonEncode({
+            'name': name,
+            'phone': phone,
+            'email': email,
+            'password': password,
+            'role': 'caregiver',
+          }),
+        )
+        .timeout(_timeoutDuration);
 
-    final data = jsonDecode(response.body);
+    final data = _parseBody(response);
     if (response.statusCode == 201 && data['success'] == true) {
       await saveToken(data['token']);
       if (data['patients'] != null && (data['patients'] as List).isNotEmpty) {
@@ -111,8 +124,8 @@ class ApiService {
     final baseUrl = await ApiConfig.getBaseUrl();
     final url = Uri.parse('$baseUrl/me');
 
-    final response = await http.get(url, headers: await _headers());
-    final data = jsonDecode(response.body);
+    final response = await http.get(url, headers: await _headers()).timeout(_timeoutDuration);
+    final data = _parseBody(response);
 
     if (response.statusCode == 200 && data['success'] == true) {
       return UserModel.fromJson(data['user']);
@@ -126,8 +139,8 @@ class ApiService {
     final baseUrl = await ApiConfig.getBaseUrl();
     final url = Uri.parse('$baseUrl/patients');
 
-    final response = await http.get(url, headers: await _headers());
-    final data = jsonDecode(response.body);
+    final response = await http.get(url, headers: await _headers()).timeout(_timeoutDuration);
+    final data = _parseBody(response);
 
     if (response.statusCode == 200 && data['success'] == true) {
       return (data['patients'] as List)
@@ -142,13 +155,15 @@ class ApiService {
     final baseUrl = await ApiConfig.getBaseUrl();
     final url = Uri.parse('$baseUrl/patients');
 
-    final response = await http.post(
-      url,
-      headers: await _headers(),
-      body: jsonEncode(patientData),
-    );
+    final response = await http
+        .post(
+          url,
+          headers: await _headers(),
+          body: jsonEncode(patientData),
+        )
+        .timeout(_timeoutDuration);
 
-    final data = jsonDecode(response.body);
+    final data = _parseBody(response);
     if (response.statusCode == 201 && data['success'] == true) {
       return PatientModel.fromJson(data['patient']);
     } else {
@@ -162,8 +177,8 @@ class ApiService {
     final query = date != null ? '?date=$date' : '';
     final url = Uri.parse('$baseUrl/patients/$patientId/logs/date$query');
 
-    final response = await http.get(url, headers: await _headers());
-    final data = jsonDecode(response.body);
+    final response = await http.get(url, headers: await _headers()).timeout(_timeoutDuration);
+    final data = _parseBody(response);
 
     if (response.statusCode == 200 && data['success'] == true) {
       if (data['log'] != null) {
@@ -179,8 +194,8 @@ class ApiService {
     final baseUrl = await ApiConfig.getBaseUrl();
     final url = Uri.parse('$baseUrl/patients/$patientId/logs?per_page=30');
 
-    final response = await http.get(url, headers: await _headers());
-    final data = jsonDecode(response.body);
+    final response = await http.get(url, headers: await _headers()).timeout(_timeoutDuration);
+    final data = _parseBody(response);
 
     if (response.statusCode == 200 && data['success'] == true) {
       return (data['data'] as List)
@@ -195,17 +210,62 @@ class ApiService {
     final baseUrl = await ApiConfig.getBaseUrl();
     final url = Uri.parse('$baseUrl/patients/$patientId/logs');
 
-    final response = await http.post(
-      url,
-      headers: await _headers(),
-      body: jsonEncode(logData),
-    );
+    final response = await http
+        .post(
+          url,
+          headers: await _headers(),
+          body: jsonEncode(logData),
+        )
+        .timeout(_timeoutDuration);
 
-    final data = jsonDecode(response.body);
+    final data = _parseBody(response);
     if ((response.statusCode == 200 || response.statusCode == 201) && data['success'] == true) {
       return DailyLogModel.fromJson(data['log']);
     } else {
       throw Exception(data['message'] ?? 'Failed to save daily log');
     }
+  }
+
+  static Future<bool> deleteLog(int patientId, int logId) async {
+    final baseUrl = await ApiConfig.getBaseUrl();
+    final url = Uri.parse('$baseUrl/patients/$patientId/logs/$logId');
+
+    final response = await http
+        .delete(url, headers: await _headers())
+        .timeout(_timeoutDuration);
+
+    final data = _parseBody(response);
+    if (response.statusCode == 200 && data['success'] == true) {
+      return true;
+    } else {
+      throw Exception(data['message'] ?? 'Failed to delete log');
+    }
+  }
+
+  static Future<Map<String, dynamic>> getStats(int patientId, {int days = 30, int? month, int? year}) async {
+    final baseUrl = await ApiConfig.getBaseUrl();
+    String query = '?days=$days';
+    if (month != null && year != null) {
+      query = '?month=$month&year=$year';
+    }
+    final url = Uri.parse('$baseUrl/patients/$patientId/stats$query');
+
+    final response = await http.get(url, headers: await _headers()).timeout(_timeoutDuration);
+    final data = _parseBody(response);
+
+    if (response.statusCode == 200 && data['success'] == true) {
+      return Map<String, dynamic>.from(data['stats'] ?? {});
+    } else {
+      throw Exception(data['message'] ?? 'Failed to load stats');
+    }
+  }
+
+  static Future<String> getPdfDownloadUrl(int patientId, {int? month, int? year}) async {
+    final baseUrl = await ApiConfig.getBaseUrl();
+    final rootUrl = baseUrl.endsWith('/api') ? baseUrl.substring(0, baseUrl.length - 4) : baseUrl;
+    final now = DateTime.now();
+    final m = month ?? now.month;
+    final y = year ?? now.year;
+    return '$rootUrl/patients/$patientId/export.pdf?month=$m&year=$y';
   }
 }

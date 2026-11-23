@@ -180,6 +180,46 @@ class _AddLogScreenState extends State<AddLogScreen> {
     }
   }
 
+  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Log'),
+        content: const Text('Are you sure you want to permanently delete this daily sugar reading?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              setState(() => _isLoading = true);
+              try {
+                if (widget.existingLog != null) {
+                  await ApiService.deleteLog(widget.patient.id, widget.existingLog!.id);
+                }
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Reading deleted successfully!')),
+                  );
+                  Navigator.pop(context, true);
+                }
+              } catch (e) {
+                setState(() {
+                  _errorMessage = e.toString().replaceAll('Exception:', '').trim();
+                  _isLoading = false;
+                });
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final formattedDate = DateFormat('EEEE, MMM d, yyyy').format(_selectedDate);
@@ -187,10 +227,22 @@ class _AddLogScreenState extends State<AddLogScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: Text('Record Sugar: ${widget.patient.name}'),
+        title: Text(
+          widget.existingLog != null
+              ? 'Edit Reading: ${widget.patient.name}'
+              : 'Record Sugar: ${widget.patient.name}',
+        ),
         backgroundColor: Colors.white,
         elevation: 0.5,
         foregroundColor: const Color(0xFF1E293B),
+        actions: [
+          if (widget.existingLog != null)
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              tooltip: 'Delete Reading',
+              onPressed: _confirmDelete,
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -346,11 +398,24 @@ class _AddLogScreenState extends State<AddLogScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text(
-                        'Save Daily Log',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    : Text(
+                        widget.existingLog != null ? 'Update Daily Log' : 'Save Daily Log',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
               ),
+              if (widget.existingLog != null) ...[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _confirmDelete,
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  label: const Text('Delete This Log', style: TextStyle(color: Colors.red)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.red),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ],
               const SizedBox(height: 30),
             ],
           ),

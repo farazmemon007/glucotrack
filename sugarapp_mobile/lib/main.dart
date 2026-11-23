@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/main_nav_screen.dart';
 import 'services/api_service.dart';
 
 void main() async {
@@ -35,7 +35,7 @@ class SugarApp extends StatelessWidget {
           centerTitle: false,
         ),
       ),
-      home: isLoggedIn ? const HomeScreen() : const LoginScreen(),
+      home: isLoggedIn ? const MainNavigationScreen() : const LoginScreen(),
     );
   }
 }

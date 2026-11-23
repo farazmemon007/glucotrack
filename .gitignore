@@ -22,3 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+*.apk
+*.zip
+sugarapp_mobile/build/
+
